@@ -21,8 +21,6 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include <pthread.h>
-
 #include "mumble.pb-c.h"
 #include "varint.h"
 #include "messages.h"
@@ -95,7 +93,7 @@ get_preamble(uint8_t *buffer, int *type, int *len)
 	*len = (int)msgLen;
 }
 
-pthread_mutex_t mutex1 = PTHREAD_MUTEX_INITIALIZER;
+GStaticMutex write_mutex = G_STATIC_MUTEX_INIT;
 
 static GstFlowReturn
 pull_buffer(GstAppSink *sink, gpointer user_data)
@@ -117,12 +115,10 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	++seq;
 	if (seq <= 2) {
 		gst_buffer_unref(buf);
-		pthread_mutex_unlock(&mutex1);
 		return GST_FLOW_OK;
 	}
 	if (GST_BUFFER_SIZE(buf) > 127) {
 		g_printerr("GOT TOO BIG BUFFER\n");
-		pthread_mutex_unlock(&mutex1);
 		return GST_FLOW_ERROR;
 	}
 
@@ -138,7 +134,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	gst_buffer_unref(buf);
 
 	add_preamble(&data[0], 1, pos-PREAMBLE_SIZE);
-	pthread_mutex_lock(&mutex1);
+	g_static_mutex_lock(&write_mutex);
 	while ((ret = ssl_write(&ctx->ssl, data, PREAMBLE_SIZE)) < PREAMBLE_SIZE) {
 		if (ret != POLARSSL_ERR_NET_TRY_AGAIN) {
 			printf("write failed: %d\n", ret);
@@ -151,7 +147,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 			abort();
 		}
 	}
-	pthread_mutex_unlock(&mutex1);
+	g_static_mutex_unlock(&write_mutex);
 
 	return GST_FLOW_OK;
 }
@@ -229,7 +225,7 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 	protobuf_c_message_pack_to_buffer(msg, &buffer.base);
 	add_preamble(preamble, type, buffer.len);
 
-	pthread_mutex_lock(&mutex1);
+	g_static_mutex_lock(&write_mutex);
 	while ((ret = ssl_write(&ctx->ssl, preamble, PREAMBLE_SIZE)) <= 0) {
 		if (ret != POLARSSL_ERR_NET_TRY_AGAIN) {
 			printf("write failed: %d\n", ret);
@@ -242,7 +238,7 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 			abort();
 		}
 	}
-	pthread_mutex_unlock(&mutex1);
+	g_static_mutex_unlock(&write_mutex);
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
 }
@@ -517,8 +513,7 @@ setup_recording_gst_pipeline(struct context *ctx)
 	gst_caps_unref(caps);
 
 	g_object_set(G_OBJECT(cutter),
-		     "threshold_dB", -45.0, "leaky", TRUE,
-		     "runlength", 0.5, "prelength", 1.0, NULL);
+		     "threshold_dB", -45.0, "leaky", TRUE, NULL);
 	
 	gst_app_sink_set_emit_signals(ctx->sink, TRUE);
 	gst_app_sink_set_drop(ctx->sink, FALSE);;
