@@ -147,13 +147,10 @@ handle_udp(struct context *ctx, uint8_t *data, uint32_t len)
 	uint32_t read = 0;
 	uint8_t frame_len, terminator;
 
-	printf("data[0]: 0x%x\n", data[0]);
-	printf("len: %u\n", len);
 	session  = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
 	sequence = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
-	printf("session: %ld, sequence: %ld\n", session, sequence);
 
 	do {
 		frame_len  = data[pos] & 0x7F;
@@ -256,7 +253,6 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 		abort();
 	}
 	ret = g_input_stream_read(input, data, len, NULL, NULL);
-	printf("read ret: %d len: %d\n", ret, len);
 
 	/* tunneled udp data - not a regular protobuf message */
 	if (type == 1) {
@@ -280,7 +276,7 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 	free(data);
 }
 
-static void
+static gboolean
 do_ping(struct context *ctx)
 {
 	MumbleProto__Ping ping;
@@ -293,6 +289,8 @@ do_ping(struct context *ctx)
 	ping.resync = 1;
 
 	send_msg(ctx, &ping.base);
+
+	return TRUE;
 }
 
 static const callback_t callbacks[] = {
@@ -511,6 +509,7 @@ int main(int argc, char **argv)
 #endif
 	struct context ctx;
 	GError *error = NULL;
+	GSource *source;
 
 	memset(&ctx, 0, sizeof(ctx));
 
@@ -557,8 +556,13 @@ int main(int argc, char **argv)
 		return 1;
 
 	ctx.sock = g_socket_connection_get_socket(ctx.conn);
-	GSource *source = g_socket_create_source(ctx.sock, G_IO_IN | G_IO_ERR, NULL);
+	source = g_socket_create_source(ctx.sock, G_IO_IN | G_IO_ERR, NULL);
 	g_source_set_callback(source, (GSourceFunc)read_cb, &ctx, NULL);
+	g_source_attach(source, NULL);
+	g_source_unref(source);
+
+	source = g_timeout_source_new_seconds(5);
+	g_source_set_callback(source, (GSourceFunc)do_ping, &ctx, NULL);
 	g_source_attach(source, NULL);
 	g_source_unref(source);
 
