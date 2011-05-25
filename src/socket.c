@@ -5,10 +5,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include "polarssl/net.h"
-#include "polarssl/ssl.h"
-#include "polarssl/havege.h"
-
 #include <celt/celt.h>
 #include <celt/celt_header.h>
 #include <speex/speex_jitter.h>
@@ -20,6 +16,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <gio/gio.h>
 
 #include "mumble.pb-c.h"
 #include "varint.h"
@@ -35,11 +32,10 @@ struct context {
 	uint32_t session;
 	bool authenticated;
 
-	ssl_context ssl;
-	havege_state hs;
-	ssl_session ssn;
-	int sock;
-	GIOChannel *sock_channel;
+	GSocketClient *sock_client;
+	GSocketConnection *conn;
+	GSocket *sock;
+	GIOStream *iostream;
 
 	CELTHeader celt_header;
 	CELTMode *celt_mode;
@@ -103,7 +99,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	uint8_t data[1024];
 	uint32_t write = 0;
 	uint32_t pos = 0;
-	int ret;
+	GOutputStream *output = g_io_stream_get_output_stream(ctx->iostream);
 
 	static uint64_t seq = 0;
 
@@ -135,18 +131,8 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 
 	add_preamble(&data[0], 1, pos-PREAMBLE_SIZE);
 	g_static_mutex_lock(&write_mutex);
-	while ((ret = ssl_write(&ctx->ssl, data, PREAMBLE_SIZE)) < PREAMBLE_SIZE) {
-		if (ret != POLARSSL_ERR_NET_TRY_AGAIN) {
-			printf("write failed: %d\n", ret);
-			abort();
-		}
-	}
-	while ((ret = ssl_write(&ctx->ssl, &data[PREAMBLE_SIZE], pos-PREAMBLE_SIZE)) < (pos-PREAMBLE_SIZE)) {
-		if (ret != POLARSSL_ERR_NET_TRY_AGAIN) {
-			printf("write failed: %d\n", ret);
-			abort();
-		}
-	}
+	g_output_stream_write(output, data, PREAMBLE_SIZE, NULL, NULL);
+	g_output_stream_write(output, &data[PREAMBLE_SIZE], pos-PREAMBLE_SIZE, NULL, NULL);
 	g_static_mutex_unlock(&write_mutex);
 
 	return GST_FLOW_OK;
@@ -212,10 +198,10 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 {
 	uint8_t pad[128];
 	uint8_t preamble[PREAMBLE_SIZE];
-	int ret = 0;
 	int type = -1;
 	int i;
 	ProtobufCBufferSimple buffer = PROTOBUF_C_BUFFER_SIMPLE_INIT(pad);
+	GOutputStream *output = g_io_stream_get_output_stream(ctx->iostream);
 	
 	for (i = 0; i < ARRAY_SIZE(messages); ++i)
 		if (messages[i].descriptor == msg->descriptor)
@@ -226,18 +212,8 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 	add_preamble(preamble, type, buffer.len);
 
 	g_static_mutex_lock(&write_mutex);
-	while ((ret = ssl_write(&ctx->ssl, preamble, PREAMBLE_SIZE)) <= 0) {
-		if (ret != POLARSSL_ERR_NET_TRY_AGAIN) {
-			printf("write failed: %d\n", ret);
-			abort();
-		}
-	}
-	while ((ret = ssl_write(&ctx->ssl, buffer.data, buffer.len)) < buffer.len) {
-		if (ret != POLARSSL_ERR_NET_TRY_AGAIN) {
-			printf("write failed: %d\n", ret);
-			abort();
-		}
-	}
+	g_output_stream_write(output, preamble, PREAMBLE_SIZE, NULL, NULL);
+	g_output_stream_write(output, buffer.data, buffer.len, NULL, NULL);
 	g_static_mutex_unlock(&write_mutex);
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
@@ -252,18 +228,13 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 	ProtobufCMessage *msg;
 	void *data;
 	int type, len;
-	int ret;
+	gssize ret;
+	GInputStream *input = g_io_stream_get_input_stream(ctx->iostream);
 
-	do {
-		ret = ssl_read(&ctx->ssl, preamble, 6);
-		if (ret == POLARSSL_ERR_NET_CONN_RESET) {
-			printf("conn reset\n");
-			g_main_loop_quit (ctx->loop);
-		}
-	} while (ret == POLARSSL_ERR_NET_TRY_AGAIN);
+	ret = g_input_stream_read(input, preamble, PREAMBLE_SIZE, NULL, NULL);
 
 	if (ret <= 0) {
-		printf("read failed: %d\n", ret);
+		printf("read failed: %ld\n", ret);
 		return;
 	}
 	
@@ -284,11 +255,8 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 		printf("out of mem\n");
 		abort();
 	}
-	ret = ssl_read(&ctx->ssl, data, len);
-	if (ret == POLARSSL_ERR_NET_CONN_RESET) {
-		printf("conn reset\n");
-		exit(1);
-	}
+	ret = g_input_stream_read(input, data, len, NULL, NULL);
+	printf("read ret: %d len: %d\n", ret, len);
 
 	/* tunneled udp data - not a regular protobuf message */
 	if (type == 1) {
@@ -310,13 +278,6 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 
 	protobuf_c_message_free_unpacked(msg, NULL);
 	free(data);
-}
-
-static void
-my_debug(void *ctx, int level, const char *str)
-{
-	if (level <= 1)
-		printf("polarssl [level %d]: %s\n", level, str);
 }
 
 static void
@@ -342,18 +303,23 @@ static const callback_t callbacks[] = {
 };
 
 static gboolean
-_recv(GIOChannel *source, GIOCondition condition, gpointer data)
+read_cb(GSocket *socket, GIOCondition condition, gpointer data)
 {
 	struct context *ctx = data;
+	GInputStream *input = g_io_stream_get_input_stream(ctx->iostream);
 
 	do {
 		recv_msg(ctx, callbacks, ARRAY_SIZE(callbacks));
-	} while (ssl_get_bytes_avail(&ctx->ssl) > 0);
+	} while (g_input_stream_has_pending(input));
 
-	//do_ping(ctx);
 
+	/* FIXME */
+	static int i = 0;
+	if (i++ < 2)
+		do_ping(ctx);
 	return TRUE;
 }
+
 static gboolean
 bus_call(GstBus *bus, GstMessage *msg, gpointer data)
 {
@@ -544,24 +510,22 @@ int main(int argc, char **argv)
 	unsigned int port = 33321;
 #endif
 	struct context ctx;
-	int ret;
+	GError *error = NULL;
 
 	memset(&ctx, 0, sizeof(ctx));
 
-	ssl_init(&ctx.ssl);
-	havege_init( &ctx.hs );
+	g_type_init();
+	ctx.sock_client = g_socket_client_new();
+	g_socket_client_set_tls(ctx.sock_client, TRUE);
+	g_socket_client_set_tls_validation_flags(ctx.sock_client,
+						 G_TLS_CERTIFICATE_INSECURE);
+	g_socket_client_set_family(ctx.sock_client, G_SOCKET_FAMILY_IPV4);
+	g_socket_client_set_protocol(ctx.sock_client, G_SOCKET_PROTOCOL_TCP);
+	g_socket_client_set_socket_type(ctx.sock_client, G_SOCKET_TYPE_STREAM);
 
-	ret = net_connect(&ctx.sock, host, port);
-	ssl_set_endpoint(&ctx.ssl, SSL_IS_CLIENT);
-	ssl_set_authmode(&ctx.ssl, SSL_VERIFY_NONE);
-
-	ssl_set_rng(&ctx.ssl, havege_rand, &ctx.hs);
-	ssl_set_dbg(&ctx.ssl, my_debug, NULL);
-	ssl_set_bio(&ctx.ssl, net_recv, &ctx.sock, net_send, &ctx.sock);
-
-	/* ssl_set_session(&ctx.ssl, 1, 600, &ssn); */
-	ssl_set_session(&ctx.ssl, 0, 0, &ctx.ssn);
-	ssl_set_ciphers(&ctx.ssl, ssl_default_ciphers);
+	ctx.conn = g_socket_client_connect_to_host(ctx.sock_client,
+						   host, port, NULL, &error);
+	ctx.iostream = g_tcp_wrapper_connection_get_base_io_stream(G_TCP_WRAPPER_CONNECTION(ctx.conn));
 
 	{
 		MumbleProto__Version version;
@@ -582,9 +546,6 @@ int main(int argc, char **argv)
 		send_msg(&ctx, &authenticate.base);
 	}
 
-	do_ping(&ctx);
-
-	g_type_init();
 	gst_init(&argc, &argv);
 
 	ctx.loop = g_main_loop_new(NULL, FALSE);
@@ -595,16 +556,15 @@ int main(int argc, char **argv)
 	if (setup_recording_gst_pipeline(&ctx) < 0)
 		return 1;
 
-	ctx.sock_channel = g_io_channel_unix_new(ctx.sock);
-	g_io_add_watch(ctx.sock_channel, G_IO_IN | G_IO_ERR, _recv, &ctx);
+	ctx.sock = g_socket_connection_get_socket(ctx.conn);
+	GSource *source = g_socket_create_source(ctx.sock, G_IO_IN | G_IO_ERR, NULL);
+	g_source_set_callback(source, (GSourceFunc)read_cb, &ctx, NULL);
+	g_source_attach(source, NULL);
+	g_source_unref(source);
 
 	g_main_loop_run(ctx.loop);
 
 	g_main_loop_unref(ctx.loop);
-
-	net_close(ctx.sock);
-	ssl_free(&ctx.ssl);
-	memset(&ctx.ssl, 0, sizeof(ctx.ssl));
 
 	return 0;
 }
