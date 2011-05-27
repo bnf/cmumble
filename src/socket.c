@@ -191,6 +191,52 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct context *ctx)
 }
 
 static void
+recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct context *ctx)
+{
+	int i;
+
+	if (crypt->has_key) {
+		printf("key: 0x");
+		for (i = 0; i < crypt->key.len; ++i)
+			printf("%x", crypt->key.data[i]);
+		printf("\n");
+
+	}
+	if (crypt->has_client_nonce) {
+		printf("client nonce: 0x");
+		for (i = 0; i < crypt->client_nonce.len; ++i)
+			printf("%x", crypt->client_nonce.data[i]);
+		printf("\n");
+
+	}
+	if (crypt->has_server_nonce) {
+		printf("server nonce: 0x");
+		for (i = 0; i < crypt->server_nonce.len; ++i)
+			printf("%x", crypt->server_nonce.data[i]);
+		printf("\n");
+
+	}
+}
+
+static void
+recv_codec_version(MumbleProto__CodecVersion *codec, struct context *ctx)
+{
+	printf("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
+	       codec->alpha, codec->beta, codec->prefer_alpha);
+}
+
+typedef void (*callback_t)(void *, void *);
+
+static const callback_t callbacks[] = {
+	/* VERSION */ (callback_t) recv_version,
+	[5] = (callback_t) recv_server_sync,
+	[7] = (callback_t) recv_channel_state,
+	[15] = (callback_t) recv_crypt_setup,
+	[21] = (callback_t) recv_codec_version,
+	[127] = NULL,
+};
+
+static void
 send_msg(struct context *ctx, ProtobufCMessage *msg)
 {
 	uint8_t pad[128];
@@ -215,8 +261,6 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
 }
-
-typedef void (*callback_t)(void *, void *);
 
 static void
 recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_size)
@@ -293,13 +337,6 @@ do_ping(struct context *ctx)
 	return TRUE;
 }
 
-static const callback_t callbacks[] = {
-	/* VERSION */ (callback_t) recv_version,
-	[5] = (callback_t) recv_server_sync,
-	[7] = (callback_t) recv_channel_state,
-	[127] = NULL,
-};
-
 static gboolean
 read_cb(GSocket *socket, GIOCondition condition, gpointer data)
 {
@@ -346,7 +383,8 @@ bus_call(GstBus *bus, GstMessage *msg, gpointer data)
 			break;
 		}
 	default:
-		g_print("unhandled message: %d %s\n", GST_MESSAGE_TYPE(msg), gst_message_type_get_name(GST_MESSAGE_TYPE(msg)));
+		g_print("unhandled message: %d %s\n", GST_MESSAGE_TYPE(msg),
+			gst_message_type_get_name(GST_MESSAGE_TYPE(msg)));
 		break;
 	}
 
@@ -460,8 +498,10 @@ setup_recording_gst_pipeline(struct context *ctx)
 	gst_object_unref(bus);
 
 	gst_bin_add_many(GST_BIN(pipeline),
-			 src, cutter, resample, conv, capsfilter, encoder, sink, NULL);
-	gst_element_link_many(src, cutter, resample, conv, capsfilter, encoder, sink, NULL);
+			 src, cutter, resample, conv,
+			 capsfilter, encoder, sink, NULL);
+	gst_element_link_many(src, cutter, resample, conv, 
+			      capsfilter, encoder, sink, NULL);
 
 	ctx->sink = GST_APP_SINK(sink);
 	ctx->record_pipeline = pipeline;
@@ -500,7 +540,7 @@ setup_recording_gst_pipeline(struct context *ctx)
 
 int main(int argc, char **argv)
 {
-#if 1
+#if 0
 	char *host = "localhost";
 	unsigned int port = 64738;
 #else
@@ -524,7 +564,7 @@ int main(int argc, char **argv)
 
 	ctx.conn = g_socket_client_connect_to_host(ctx.sock_client,
 						   host, port, NULL, &error);
-	ctx.iostream = g_tcp_wrapper_connection_get_base_io_stream(G_TCP_WRAPPER_CONNECTION(ctx.conn));
+	g_object_get(G_OBJECT(ctx.conn), "base-io-stream", &ctx.iostream, NULL);
 
 	{
 		MumbleProto__Version version;
