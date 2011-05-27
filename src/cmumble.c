@@ -38,15 +38,25 @@ struct context {
 	GSocket *sock;
 	GIOStream *iostream;
 
+	uint8_t celt_header_packet[sizeof(CELTHeader)];
 	CELTHeader celt_header;
 	CELTMode *celt_mode;
 
-	GstElement *playback_pipeline;
 	GstElement *record_pipeline;
-	GstAppSrc *src;
 	GstAppSink *sink;
 
 	int64_t sequence;
+
+	GList *users;
+};
+
+struct user {
+	uint32_t session;
+	char *name;
+	uint32_t user_id;
+
+	GstElement *pipeline;
+	GstAppSrc *src;
 };
 
 enum udp_message_type {
@@ -55,6 +65,23 @@ enum udp_message_type {
 	udp_voice_speex,
 	udp_voice_celt_beta
 };
+
+static struct user *
+find_user(struct context *ctx, uint32_t session)
+{
+	struct user *user = NULL, *tmp;
+	GList *l;
+
+	for (l = ctx->users; l; l = l->next) {
+		tmp = l->data;
+		if (tmp->session == session) {
+			user = tmp;
+			break;
+		}
+	}
+
+	return user;
+}
 
 static void
 appsrc_push(GstAppSrc *src, const void *mem, size_t size)
@@ -147,11 +174,18 @@ handle_udp(struct context *ctx, uint8_t *data, uint32_t len)
 	uint32_t pos = 1;
 	uint32_t read = 0;
 	uint8_t frame_len, terminator;
+	struct user *user = NULL;
 
 	session  = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
 	sequence = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
+
+	user = find_user(ctx, session);
+	if (user == NULL) {
+		g_printerr("received audio packet from unknown user, dropping.\n");
+		return;
+	}
 
 	do {
 		frame_len  = data[pos] & 0x7F;
@@ -161,7 +195,7 @@ handle_udp(struct context *ctx, uint8_t *data, uint32_t len)
 		if (frame_len == 0 || frame_len > len-pos)
 			break;
 
-		appsrc_push(ctx->src, &data[pos], frame_len);
+		appsrc_push(user->src, &data[pos], frame_len);
 
 		pos += frame_len;
 		sequence++;
@@ -226,12 +260,56 @@ recv_codec_version(MumbleProto__CodecVersion *codec, struct context *ctx)
 	       codec->alpha, codec->beta, codec->prefer_alpha);
 }
 
+
+static void
+recv_user_remove(MumbleProto__UserRemove *remove, struct context *ctx)
+{
+	struct user *user = NULL;
+
+	if ((user = find_user(ctx, remove->session))) {
+		ctx->users = g_list_remove(ctx->users, user);
+		g_free(user->name);
+		/* FIXME: destroy playback pipeline */
+		g_free(user);
+	}
+}
+
+static int
+user_create_playback_pipeline(struct context *ctx, struct user *user);
+
+static void
+recv_user_state(MumbleProto__UserState *state, struct context *ctx)
+{
+	struct user *user = NULL;
+
+	if ((user = find_user(ctx, state->session))) {
+		/* update */
+		return;
+	}
+
+	user = g_new0(struct user, 1);
+	if (user == NULL) {
+		g_printerr("Out of memory.\n");
+		exit(1);
+	}
+
+	user->session = state->session;
+	user->name = g_strdup(state->name);
+	user->user_id = state->user_id;
+
+	user_create_playback_pipeline(ctx, user);
+	g_print("receive user: %s\n", user->name);
+	ctx->users = g_list_prepend(ctx->users, user);
+}
+
 typedef void (*callback_t)(void *, void *);
 
 static const callback_t callbacks[] = {
 	/* VERSION */ (callback_t) recv_version,
 	[5] = (callback_t) recv_server_sync,
 	[7] = (callback_t) recv_channel_state,
+	[8] = (callback_t) recv_user_remove,
+	[9] = (callback_t) recv_user_state,
 	[15] = (callback_t) recv_crypt_setup,
 	[21] = (callback_t) recv_codec_version,
 	[127] = NULL,
@@ -415,16 +493,18 @@ static GstAppSrcCallbacks app_callbacks = {
 };
 
 static int
-setup_playback_gst_pipeline(struct context *ctx)
+user_create_playback_pipeline(struct context *ctx, struct user *user)
 {
 	GstElement *pipeline, *src, *decoder, *conv, *sink;
 	GstBus *bus;
+	uint32_t s = user->session;
 
-	pipeline = gst_pipeline_new("cmumble-output");
-	src = gst_element_factory_make("appsrc", "input");
-	decoder = gst_element_factory_make("celtdec", "celt-decoder");
-	conv = gst_element_factory_make("audioconvert", "converter");
-	sink = gst_element_factory_make("autoaudiosink", "audio-output");
+	/* FIXME: free strings buffers */
+	pipeline = gst_pipeline_new(g_strdup_printf("cmumble-output-%d", s));
+	src = gst_element_factory_make("appsrc", g_strdup_printf("input-%d", s));
+	decoder = gst_element_factory_make("celtdec", g_strdup_printf("celt-decoder-%d", s));
+	conv = gst_element_factory_make("audioconvert", g_strdup_printf("converter-%d", s));
+	sink = gst_element_factory_make("autoaudiosink", g_strdup_printf("audio-output-%d", s));
 
 	if (!pipeline || !src || !decoder || !conv || !sink) {
 		g_printerr("failed to initialize pipeline\n");
@@ -439,34 +519,39 @@ setup_playback_gst_pipeline(struct context *ctx)
 			 src, decoder, conv, sink, NULL);
 	gst_element_link_many(src, decoder, conv, sink, NULL);
 
-	ctx->src = GST_APP_SRC(src);
-	ctx->playback_pipeline = pipeline;
+	user->src = GST_APP_SRC(src);
+	user->pipeline = pipeline;
 
 	/* Important! */
-	gst_base_src_set_live(GST_BASE_SRC(ctx->src), TRUE); 
-	gst_base_src_set_do_timestamp(GST_BASE_SRC(ctx->src), TRUE);
-	gst_base_src_set_format(GST_BASE_SRC(ctx->src), GST_FORMAT_TIME);
+	gst_base_src_set_live(GST_BASE_SRC(user->src), TRUE); 
+	gst_base_src_set_do_timestamp(GST_BASE_SRC(user->src), TRUE);
+	gst_base_src_set_format(GST_BASE_SRC(user->src), GST_FORMAT_TIME);
 
-	gst_app_src_set_stream_type(ctx->src, GST_APP_STREAM_TYPE_STREAM); 
-	gst_app_src_set_callbacks(ctx->src, &app_callbacks, ctx, NULL);
+	gst_app_src_set_stream_type(user->src, GST_APP_STREAM_TYPE_STREAM); 
+	gst_app_src_set_callbacks(user->src, &app_callbacks, ctx, NULL);
 
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
-	{ /* Setup Celt Decoder */
+	/* Setup Celt Decoder */
+	appsrc_push(user->src, ctx->celt_header_packet, sizeof(CELTHeader));
+	/* fake vorbiscomment buffer */
+	appsrc_push(user->src, NULL, 0);
+
+
+	return 0;
+}
+
+static int
+setup_playback_gst_pipeline(struct context *ctx)
+{
 #define SAMPLERATE 48000
 #define CHANNELS 1
-		uint8_t celt_header_packet[sizeof(CELTHeader)];
 
-		ctx->celt_mode = celt_mode_create(SAMPLERATE,
-						  SAMPLERATE / 100, NULL);
-		celt_header_init(&ctx->celt_header, ctx->celt_mode, CHANNELS);
-		celt_header_to_packet(&ctx->celt_header,
-				      celt_header_packet, sizeof(CELTHeader));
-
-		appsrc_push(ctx->src, celt_header_packet, sizeof(CELTHeader));
-		/* fake vorbiscomment buffer */
-		appsrc_push(ctx->src, NULL, 0);
-	}
+	ctx->celt_mode = celt_mode_create(SAMPLERATE,
+					  SAMPLERATE / 100, NULL);
+	celt_header_init(&ctx->celt_header, ctx->celt_mode, CHANNELS);
+	celt_header_to_packet(&ctx->celt_header,
+			      ctx->celt_header_packet, sizeof(CELTHeader));
 
 	return 0;
 }
@@ -552,7 +637,14 @@ int main(int argc, char **argv)
 	GError *error = NULL;
 	GSource *source;
 
+	if (argc >= 3)
+		host = argv[2];
+	if (argc >= 4)
+		port = atoi(argv[3]);
+
 	memset(&ctx, 0, sizeof(ctx));
+
+	ctx.users = NULL;
 
 	g_type_init();
 	ctx.sock_client = g_socket_client_new();
