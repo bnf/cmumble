@@ -7,7 +7,6 @@
 
 #include <celt/celt.h>
 #include <celt/celt_header.h>
-#include <speex/speex_jitter.h>
 
 #include <gst/gst.h>
 #include <gst/app/gstappsrc.h>
