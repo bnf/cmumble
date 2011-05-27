@@ -563,6 +563,11 @@ int main(int argc, char **argv)
 
 	ctx.conn = g_socket_client_connect_to_host(ctx.sock_client,
 						   host, port, NULL, &error);
+	if (error) {
+		g_printerr("connect failed: %s\n", error->message);
+		return 1;
+	}
+
 	g_object_get(G_OBJECT(ctx.conn), "base-io-stream", &ctx.iostream, NULL);
 
 	{
