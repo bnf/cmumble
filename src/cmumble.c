@@ -1,3 +1,5 @@
+#include "../config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -574,7 +576,7 @@ int main(int argc, char **argv)
 		MumbleProto__Version version;
 		mumble_proto__version__init(&version);
 		version.version = 0x010203;
-		version.release = "cmumble 0.1";
+		version.release = PACKAGE_STRING;
 		version.os = "Gentoo/Linux";
 		send_msg(&ctx, &version.base);
 	}
