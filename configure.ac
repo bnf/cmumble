@@ -21,7 +21,10 @@ LT_PREREQ([2.2])
 LT_INIT
 
 PKG_PROG_PKG_CONFIG()
-PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c])
+PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-2c],[], [
+	AC_CHECK_LIB([protobuf-c], [protobuf_c_message_pack_to_buffer], [],
+		     [AC_MSG_ERROR([libprotobuf-c not found])])
+])
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.28])
 PKG_CHECK_MODULES(GIO,  [gio-2.0])
 PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10 gstreamer-app-0.10])
