@@ -1,4 +1,5 @@
 AC_PREREQ([2.64])
+
 AC_INIT([cmumble],
         [0.1],
         [benjaminfranzke@googlemail.com],
@@ -26,6 +27,15 @@ PKG_CHECK_MODULES(GIO,  [gio-2.0],,[AC_MSG_ERROR([gio-2.0 missing])])
 PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10 gstreamer-app-0.10],,
 		  [AC_MSG_ERROR([gstreamer-0.10 or gstreamer-app-0.10 missing])])
 PKG_CHECK_MODULES(CELT, [celt],,[AC_MSG_ERROR([celt missing])])
+
+GST_ELEMENTS="appsrc appsink celtdec celtenc capsfilter
+	      audioconvert audioresample autoaudiosrc autoaudiosink"
+
+for element in $GST_ELEMENTS
+do
+	AM_GST_ELEMENT_CHECK([$element], [],
+			     AC_MSG_ERROR([gstreamer element $element not found]))
+done
 
 PROTOBUF_EXECUTABLE=`pkg-config --variable=exec_prefix libprotobuf-c`
 if test -n "$PROTOBUF_EXECUTABLE"; then
