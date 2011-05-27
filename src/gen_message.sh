@@ -1,3 +1,5 @@
+#!/bin/sh
+
 echo "static const struct { const ProtobufCMessageDescriptor *descriptor; const char *name; } messages[] = {"
 while read message
 do
