@@ -21,12 +21,11 @@ LT_PREREQ([2.2])
 LT_INIT
 
 PKG_PROG_PKG_CONFIG()
-PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],,[AC_MSG_ERROR([libprotobuf missing])])
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.28],,[AC_MSG_ERROR([glib-2.0 missing])])
-PKG_CHECK_MODULES(GIO,  [gio-2.0],,[AC_MSG_ERROR([gio-2.0 missing])])
-PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10 gstreamer-app-0.10],,
-		  [AC_MSG_ERROR([gstreamer-0.10 or gstreamer-app-0.10 missing])])
-PKG_CHECK_MODULES(CELT, [celt],,[AC_MSG_ERROR([celt missing])])
+PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c])
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.28])
+PKG_CHECK_MODULES(GIO,  [gio-2.0])
+PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10 gstreamer-app-0.10])
+PKG_CHECK_MODULES(CELT, [celt])
 
 GST_ELEMENTS="appsrc appsink celtdec celtenc capsfilter
 	      audioconvert audioresample autoaudiosrc autoaudiosink"
