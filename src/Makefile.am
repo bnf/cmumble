@@ -7,6 +7,8 @@ cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) $(GSTREAMER_LIBS) $(CE
 AM_CPPFLAGS = $(PROTOBUF_CFLAGS) $(GLIB_CFLAGS) $(GIO_CFLAGS) $(GSTREAMER_CFLAGS) $(CELT_CFLAGS)
 AM_CFLAGS = $(GCC_FLAGS)
 
+$(cmumble_SOURCES): messages.h mumble.pb-c.h
+
 messages.h: messages.txt
 	./gen_message.sh < $< > $@
 
