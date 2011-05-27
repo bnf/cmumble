@@ -626,13 +626,8 @@ setup_recording_gst_pipeline(struct context *ctx)
 
 int main(int argc, char **argv)
 {
-#if 0
 	char *host = "localhost";
 	unsigned int port = 64738;
-#else
-	char *host = "85.214.21.153";
-	unsigned int port = 33321;
-#endif
 	struct context ctx;
 	GError *error = NULL;
 	GSource *source;
