@@ -40,7 +40,7 @@ do
 done
 
 PROTOBUF_EXECUTABLE=`pkg-config --variable=exec_prefix libprotobuf-c`
-if test -n "$PROTOBUF_EXECUTABLE"; then
+if test "x$PROTOBUF_EXECUTABLE" == "x"; then
 	PROTOBUF_EXECUTABLE=protoc-c
 else
 	PROTOBUF_EXECUTABLE="${PROTBUF_EXECUTABLE}/bin/protoc-c"
