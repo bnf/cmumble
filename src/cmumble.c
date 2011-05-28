@@ -167,7 +167,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 }
 
 static void
-handle_udp(struct context *ctx, uint8_t *data, uint32_t len)
+recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct context *ctx)
 {
 	int64_t session;
 	int64_t sequence;
@@ -175,6 +175,8 @@ handle_udp(struct context *ctx, uint8_t *data, uint32_t len)
 	uint32_t read = 0;
 	uint8_t frame_len, terminator;
 	struct user *user = NULL;
+	uint8_t *data = tunnel->packet.data;
+	size_t len = tunnel->packet.len;
 
 	session  = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
@@ -306,6 +308,7 @@ typedef void (*callback_t)(void *, void *);
 
 static const callback_t callbacks[] = {
 	/* VERSION */ (callback_t) recv_version,
+	[UDPTunnel] = (callback_t) recv_udp_tunnel,
 	[5] = (callback_t) recv_server_sync,
 	[7] = (callback_t) recv_channel_state,
 	[8] = (callback_t) recv_user_remove,
@@ -377,9 +380,20 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 	}
 	ret = g_input_stream_read(input, data, len, NULL, NULL);
 
-	/* tunneled udp data - not a regular protobuf message */
+	/* tunneled udp data - not a regular protobuf message
+	 * create dummy ProtobufCMessage */
 	if (type == UDPTunnel) {
-		handle_udp(ctx, data, len);
+		MumbleProto__UDPTunnel udptunnel;
+		mumble_proto__udptunnel__init(&udptunnel);
+
+		udptunnel.packet.len = len;
+		udptunnel.packet.data = data;
+		
+		if (callbacks[UDPTunnel])
+			callbacks[UDPTunnel](&udptunnel.base, ctx);
+
+		//handle_udp(ctx, data, len);
+
 		free(data);
 		return;
 	}
