@@ -340,32 +340,19 @@ static GstAppSrcCallbacks app_callbacks = {
 static int
 user_create_playback_pipeline(struct context *ctx, struct user *user)
 {
-	GstElement *pipeline, *src, *decoder, *conv, *sink;
-	GstBus *bus;
-	uint32_t s = user->session;
+	GstElement *pipeline;
+	GError *error = NULL;
+	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink";
 
-	/* FIXME: free strings buffers */
-	pipeline = gst_pipeline_new(g_strdup_printf("cmumble-output-%d", s));
-	src = gst_element_factory_make("appsrc", g_strdup_printf("input-%d", s));
-	decoder = gst_element_factory_make("celtdec", g_strdup_printf("celt-decoder-%d", s));
-	conv = gst_element_factory_make("audioconvert", g_strdup_printf("converter-%d", s));
-	sink = gst_element_factory_make("autoaudiosink", g_strdup_printf("audio-output-%d", s));
+	pipeline = gst_parse_launch(desc, &error);
 
-	if (!pipeline || !src || !decoder || !conv || !sink) {
-		g_printerr("failed to initialize pipeline\n");
+	if (error) {
+		g_printerr("Failed to create pipeline: %s\n", error->message);
 		return -1;
 	}
 
-	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-	gst_bus_add_watch(bus, bus_call, ctx);
-	gst_object_unref(bus);
-
-	gst_bin_add_many(GST_BIN(pipeline),
-			 src, decoder, conv, sink, NULL);
-	gst_element_link_many(src, decoder, conv, sink, NULL);
-
-	user->src = GST_APP_SRC(src);
 	user->pipeline = pipeline;
+	user->src = GST_APP_SRC(gst_bin_get_by_name(GST_BIN(pipeline), "src"));
 
 	/* Important! */
 	gst_base_src_set_live(GST_BASE_SRC(user->src), TRUE); 
@@ -382,7 +369,6 @@ user_create_playback_pipeline(struct context *ctx, struct user *user)
 	/* fake vorbiscomment buffer */
 	appsrc_push(user->src, NULL, 0);
 
-
 	return 0;
 }
 
@@ -391,7 +377,6 @@ setup_playback_gst_pipeline(struct context *ctx)
 {
 #define SAMPLERATE 48000
 #define CHANNELS 1
-
 	ctx->celt_mode = celt_mode_create(SAMPLERATE,
 					  SAMPLERATE / 100, NULL);
 	celt_header_init(&ctx->celt_header, ctx->celt_mode, CHANNELS);
