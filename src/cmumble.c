@@ -389,49 +389,24 @@ setup_playback_gst_pipeline(struct context *ctx)
 static int
 setup_recording_gst_pipeline(struct context *ctx)
 {
-	GstElement *pipeline, *src, *cutter, *resample,
-		   *conv, *capsfilter, *encoder, *sink;
-	GstBus *bus;
+	GstElement *pipeline, *cutter, *sink;
+	GError *error = NULL;
 	GstCaps *caps;
 
-	pipeline = gst_pipeline_new("cmumble-input");
-	src = gst_element_factory_make("autoaudiosrc", "audio-input");
-	cutter = gst_element_factory_make("cutter", "cutter");
-	resample = gst_element_factory_make("audioresample", "resample");
-	conv = gst_element_factory_make("audioconvert", "converter");
-	capsfilter = gst_element_factory_make("capsfilter", "capsfilter");
-	encoder = gst_element_factory_make("celtenc", "celt-encoder");
-	sink = gst_element_factory_make("appsink", "output");
+	char *desc = "autoaudiosrc ! cutter name=cutter ! audioresample ! audioconvert ! "
+		     "audio/x-raw-int,channels=1,depth=16,rate=48000,signed=TRUE,width=16 ! "
+		     "celtenc ! appsink name=sink";
 
-	if (!pipeline || !src || !cutter || !resample || !conv ||
-	    !capsfilter || !encoder || !sink) {
-		g_printerr("failed to initialize pipeline\n");
+	pipeline = gst_parse_launch(desc, &error);
+	if (error) {
+		g_printerr("Failed to create pipeline: %s\n", error->message);
 		return -1;
 	}
-
-	bus = gst_pipeline_get_bus(GST_PIPELINE(pipeline));
-	gst_bus_add_watch(bus, bus_call, ctx);
-	gst_object_unref(bus);
-
-	gst_bin_add_many(GST_BIN(pipeline),
-			 src, cutter, resample, conv,
-			 capsfilter, encoder, sink, NULL);
-	gst_element_link_many(src, cutter, resample, conv, 
-			      capsfilter, encoder, sink, NULL);
-
+	sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
 	ctx->sink = GST_APP_SINK(sink);
 	ctx->record_pipeline = pipeline;
 
-	caps = gst_caps_new_simple("audio/x-raw-int",
-				   "channels", G_TYPE_INT, 1,
-				   "depth", G_TYPE_INT, 16,
-				   "rate", G_TYPE_INT, 48000,
-				   "width", G_TYPE_INT, 16,
-				   "signed", G_TYPE_BOOLEAN, TRUE,
-				   NULL);
-	g_object_set(G_OBJECT(capsfilter), "caps", caps, NULL);
-	gst_caps_unref(caps);
-
+	cutter = gst_bin_get_by_name(GST_BIN(pipeline), "cutter");
 	g_object_set(G_OBJECT(cutter),
 		     "threshold_dB", -45.0, "leaky", TRUE, NULL);
 	
