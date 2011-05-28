@@ -1,6 +1,6 @@
 bin_PROGRAMS = cmumble
 
-noinst_HEADERS = messages.h mumble.pb-c.h varint.h
+noinst_HEADERS = cmumble.h messages.h mumble.pb-c.h varint.h
 cmumble_SOURCES = cmumble.c mumble.pb-c.c varint.c
 cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) $(GSTREAMER_LIBS) $(CELT_LIBS)
 
@@ -9,7 +9,7 @@ AM_CFLAGS = $(GCC_FLAGS)
 
 $(cmumble_SOURCES): messages.h mumble.pb-c.h
 
-messages.h: messages.txt
+messages.h: messages.txt gen_message.sh
 	./gen_message.sh < $< > $@
 
 mumble.pb-c.c mumble.pb-c.h: mumble.proto

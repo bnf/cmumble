@@ -21,7 +21,7 @@
 
 #include "mumble.pb-c.h"
 #include "varint.h"
-#include "messages.h"
+#include "cmumble.h"
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
@@ -157,7 +157,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 
 	gst_buffer_unref(buf);
 
-	add_preamble(&data[0], 1, pos-PREAMBLE_SIZE);
+	add_preamble(&data[0], UDPTunnel, pos-PREAMBLE_SIZE);
 	g_static_mutex_lock(&write_mutex);
 	g_output_stream_write(output, data, PREAMBLE_SIZE, NULL, NULL);
 	g_output_stream_write(output, &data[PREAMBLE_SIZE], pos-PREAMBLE_SIZE, NULL, NULL);
@@ -378,7 +378,7 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 	ret = g_input_stream_read(input, data, len, NULL, NULL);
 
 	/* tunneled udp data - not a regular protobuf message */
-	if (type == 1) {
+	if (type == UDPTunnel) {
 		handle_udp(ctx, data, len);
 		free(data);
 		return;
