@@ -119,6 +119,9 @@ get_preamble(uint8_t *buffer, int *type, int *len)
 
 GStaticMutex write_mutex = G_STATIC_MUTEX_INIT;
 
+static void
+send_msg(struct context *ctx, ProtobufCMessage *msg);
+
 static GstFlowReturn
 pull_buffer(GstAppSink *sink, gpointer user_data)
 {
@@ -128,11 +131,8 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	uint32_t write = 0;
 	uint32_t pos = 0;
 	GOutputStream *output = g_io_stream_get_output_stream(ctx->iostream);
-
-	static uint64_t seq = 0;
-
-	/* header will be written at the end */
-	pos = PREAMBLE_SIZE;
+	MumbleProto__UDPTunnel tunnel;
+	static int seq = 0;
 
 	buf = gst_app_sink_pull_buffer(ctx->sink);
 
@@ -157,11 +157,10 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 
 	gst_buffer_unref(buf);
 
-	add_preamble(&data[0], UDPTunnel, pos-PREAMBLE_SIZE);
-	g_static_mutex_lock(&write_mutex);
-	g_output_stream_write(output, data, PREAMBLE_SIZE, NULL, NULL);
-	g_output_stream_write(output, &data[PREAMBLE_SIZE], pos-PREAMBLE_SIZE, NULL, NULL);
-	g_static_mutex_unlock(&write_mutex);
+	mumble_proto__udptunnel__init(&tunnel);
+	tunnel.packet.data = data;
+	tunnel.packet.len = pos;
+	send_msg(ctx, &tunnel.base);
 
 	return GST_FLOW_OK;
 }
@@ -333,7 +332,15 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 			type = i;
 	assert(type >= 0);
 
-	protobuf_c_message_pack_to_buffer(msg, &buffer.base);
+	if (type == UDPTunnel) {
+		MumbleProto__UDPTunnel *tunnel = (MumbleProto__UDPTunnel *) msg;
+		buffer.data = tunnel->packet.data;
+		buffer.len = tunnel->packet.len;
+		buffer.must_free_data = 0;
+	} else {
+		protobuf_c_message_pack_to_buffer(msg, &buffer.base);
+	}
+
 	add_preamble(preamble, type, buffer.len);
 
 	g_static_mutex_lock(&write_mutex);
