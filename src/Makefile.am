@@ -1,7 +1,7 @@
 bin_PROGRAMS = cmumble
 
 noinst_HEADERS = cmumble.h messages.h mumble.pb-c.h varint.h
-cmumble_SOURCES = cmumble.c mumble.pb-c.c varint.c
+cmumble_SOURCES = cmumble.c messages.c mumble.pb-c.c varint.c
 cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) $(GSTREAMER_LIBS) $(CELT_LIBS)
 
 AM_CPPFLAGS = $(PROTOBUF_CFLAGS) $(GLIB_CFLAGS) $(GIO_CFLAGS) $(GSTREAMER_CFLAGS) $(CELT_CFLAGS)
