@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "varint.h"
 
 void
 encode_varint(uint8_t *data, uint32_t *write, int64_t value, uint32_t left)
@@ -6,6 +7,7 @@ encode_varint(uint8_t *data, uint32_t *write, int64_t value, uint32_t left)
 	uint32_t pos = 0;
 
 	if (value < 0) {
+		/* FIXME */
 		*write = 0;
 		return;
 	}

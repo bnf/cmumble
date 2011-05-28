@@ -8,16 +8,14 @@
 static struct user *
 find_user(struct context *ctx, uint32_t session)
 {
-	struct user *user = NULL, *tmp;
+	struct user *user = NULL;
 	GList *l;
 
-	for (l = ctx->users; l; l = l->next) {
-		tmp = l->data;
-		if (tmp->session == session) {
-			user = tmp;
+	for (l = ctx->users; l; l = l->next)
+		if (((struct user *) l->data)->session == session) {
+			user = l->data;
 			break;
 		}
-	}
 
 	return user;
 }
@@ -27,11 +25,9 @@ appsrc_push(GstAppSrc *src, const void *mem, size_t size)
 {
 	GstBuffer *gstbuf;
 	
-	gstbuf = gst_app_buffer_new(g_memdup(mem, size), size,
-				    g_free, NULL);
+	gstbuf = gst_app_buffer_new(g_memdup(mem, size), size, g_free, NULL);
 	gst_app_src_push_buffer(src, gstbuf);
 }
-
 
 static GstFlowReturn
 pull_buffer(GstAppSink *sink, gpointer user_data)
@@ -39,16 +35,14 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	struct context *ctx = user_data;
 	GstBuffer *buf;
 	uint8_t data[1024];
-	uint32_t write = 0;
-	uint32_t pos = 0;
+	uint32_t write = 0, pos = 0;
 	GOutputStream *output = g_io_stream_get_output_stream(ctx->iostream);
 	MumbleProto__UDPTunnel tunnel;
 	static int seq = 0;
 
 	buf = gst_app_sink_pull_buffer(ctx->sink);
 
-	++seq;
-	if (seq <= 2) {
+	if (++seq <= 2) {
 		gst_buffer_unref(buf);
 		return GST_FLOW_OK;
 	}
@@ -79,10 +73,8 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 static void
 recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct context *ctx)
 {
-	int64_t session;
-	int64_t sequence;
-	uint32_t pos = 1;
-	uint32_t read = 0;
+	int64_t session, sequence;
+	uint32_t pos = 1, read = 0;
 	uint8_t frame_len, terminator;
 	struct user *user = NULL;
 	uint8_t *data = tunnel->packet.data;
@@ -134,7 +126,6 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct context *ctx)
 	ctx->session = sync->session;
 
 	printf("got session: %d\n", ctx->session);
-
 }
 
 static void
@@ -147,21 +138,18 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct context *ctx)
 		for (i = 0; i < crypt->key.len; ++i)
 			printf("%x", crypt->key.data[i]);
 		printf("\n");
-
 	}
 	if (crypt->has_client_nonce) {
 		printf("client nonce: 0x");
 		for (i = 0; i < crypt->client_nonce.len; ++i)
 			printf("%x", crypt->client_nonce.data[i]);
 		printf("\n");
-
 	}
 	if (crypt->has_server_nonce) {
 		printf("server nonce: 0x");
 		for (i = 0; i < crypt->server_nonce.len; ++i)
 			printf("%x", crypt->server_nonce.data[i]);
 		printf("\n");
-
 	}
 }
 
@@ -252,10 +240,8 @@ do_ping(struct context *ctx)
 
 	g_get_current_time(&tv);
 	mumble_proto__ping__init(&ping);
-
 	ping.timestamp = tv.tv_sec;
 	ping.resync = 1;
-
 	send_msg(ctx, &ping.base);
 
 	return TRUE;
@@ -271,11 +257,11 @@ read_cb(GSocket *socket, GIOCondition condition, gpointer data)
 		recv_msg(ctx, callbacks, G_N_ELEMENTS(callbacks));
 	} while (g_input_stream_has_pending(input));
 
-
 	/* FIXME */
 	static int i = 0;
 	if (i++ < 2)
 		do_ping(ctx);
+
 	return TRUE;
 }
 
