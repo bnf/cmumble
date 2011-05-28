@@ -279,64 +279,6 @@ read_cb(GSocket *socket, GIOCondition condition, gpointer data)
 	return TRUE;
 }
 
-static gboolean
-bus_call(GstBus *bus, GstMessage *msg, gpointer data)
-{
-	struct context *ctx = data;
-	GMainLoop *loop = ctx->loop;
-
-	switch (GST_MESSAGE_TYPE (msg)) {
-
-	case GST_MESSAGE_EOS:
-		g_print ("End of stream\n");
-		g_main_loop_quit (loop);
-		break;
-
-	case GST_MESSAGE_ERROR:
-		{
-			char  *debug;
-			GError *error;
-
-			gst_message_parse_error (msg, &error, &debug);
-			g_free (debug);
-
-			g_printerr ("Error: %s\n", error->message);
-			g_error_free (error);
-
-			g_main_loop_quit (loop);
-			break;
-		}
-	default:
-		g_print("unhandled message: %d %s\n", GST_MESSAGE_TYPE(msg),
-			gst_message_type_get_name(GST_MESSAGE_TYPE(msg)));
-		break;
-	}
-
-	return TRUE;
-}
-
-static void
-app_need_data(GstAppSrc *src, guint length, gpointer user_data)
-{
-#if 0
-	struct context *ctx = user_data;
-#endif
-}
-
-static void
-app_enough_data(GstAppSrc *src, gpointer user_data)
-{
-#if 0
-	struct context *ctx = user_data;
-#endif
-}
-
-static GstAppSrcCallbacks app_callbacks = {
-	app_need_data,
-	app_enough_data,
-	NULL
-};
-
 static int
 user_create_playback_pipeline(struct context *ctx, struct user *user)
 {
@@ -345,7 +287,6 @@ user_create_playback_pipeline(struct context *ctx, struct user *user)
 	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink";
 
 	pipeline = gst_parse_launch(desc, &error);
-
 	if (error) {
 		g_printerr("Failed to create pipeline: %s\n", error->message);
 		return -1;
@@ -360,7 +301,6 @@ user_create_playback_pipeline(struct context *ctx, struct user *user)
 	gst_base_src_set_format(GST_BASE_SRC(user->src), GST_FORMAT_TIME);
 
 	gst_app_src_set_stream_type(user->src, GST_APP_STREAM_TYPE_STREAM); 
-	gst_app_src_set_callbacks(user->src, &app_callbacks, ctx, NULL);
 
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
