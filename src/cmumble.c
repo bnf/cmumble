@@ -265,12 +265,46 @@ read_cb(GSocket *socket, GIOCondition condition, gpointer data)
 	return TRUE;
 }
 
+void
+set_pulse_states(gpointer data, gpointer user_data)
+{
+	GstElement *elm = data;
+	struct user *user = user_data;
+	GstStructure *props;
+	gchar *name;
+
+	if (g_strcmp0(G_OBJECT_TYPE_NAME(elm), "GstPulseSink") != 0 ||
+	    g_object_class_find_property(G_OBJECT_GET_CLASS(elm),
+					 "stream-properties") == NULL)
+		goto out;
+
+	/* configure pulseaudio to use:
+	 * load-module module-device-manager "do_routing=1"
+	 * or new users may join to default output which is not headset?
+	 * Also consider setting device.intended_roles = "phone" for your
+	 * wanted default output (if you dont have a usb headset dev). */
+
+	name = g_strdup_printf("cmumble [%s]", user->name);
+
+	props = gst_structure_new("props",
+				  "application.name", G_TYPE_STRING, name,
+				  "media.role", G_TYPE_STRING, "phone",
+				  NULL);
+					
+	g_object_set(elm, "stream-properties", props, NULL);
+	gst_structure_free(props);
+	g_free(name);
+
+out:
+	g_object_unref(G_OBJECT(elm));
+}
+
 static int
 user_create_playback_pipeline(struct context *ctx, struct user *user)
 {
-	GstElement *pipeline;
+	GstElement *pipeline, *sink_bin, *sink;
 	GError *error = NULL;
-	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink";
+	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink name=sink";
 
 	pipeline = gst_parse_launch(desc, &error);
 	if (error) {
@@ -289,6 +323,11 @@ user_create_playback_pipeline(struct context *ctx, struct user *user)
 	gst_app_src_set_stream_type(user->src, GST_APP_STREAM_TYPE_STREAM); 
 
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
+
+	sink_bin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
+	GstIterator *iter = gst_bin_iterate_sinks(GST_BIN(sink_bin));
+	gst_iterator_foreach(iter, set_pulse_states, user);
+	gst_iterator_free(iter);
 
 	/* Setup Celt Decoder */
 	appsrc_push(user->src, ctx->celt_header_packet, sizeof(CELTHeader));
