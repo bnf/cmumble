@@ -17,7 +17,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AC_PROG_CC
 
 PKG_PROG_PKG_CONFIG()
-PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-2c],[], [
+PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],[], [
 	AC_CHECK_LIB([protobuf-c], [protobuf_c_message_pack_to_buffer], [],
 		     [AC_MSG_ERROR([libprotobuf-c not found])])
 ])
