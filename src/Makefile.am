@@ -11,9 +11,9 @@ AM_CFLAGS = $(GCC_FLAGS)
 $(cmumble_SOURCES): messages.h mumble.pb-c.h
 
 messages.h: messages.txt gen_message.sh
-	./gen_message.sh < $< > $@
+	$(AM_V_GEN) ./gen_message.sh < $< > $@
 
 mumble.pb-c.c mumble.pb-c.h: mumble.proto
-	$(PROTOBUF_EXECUTABLE) --c_out=. $<
+	$(AM_V_GEN) $(PROTOBUF_EXECUTABLE) --c_out=. $<
 
 CLEANFILES = mumble.pb-c.c mumble.pb-c.h messages.h
