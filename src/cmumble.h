@@ -56,7 +56,7 @@ enum udp_message_type {
 };
 
 enum mumble_message {
-#define MUMBLE_MSG(a,b,c) a,
+#define MUMBLE_MSG(a,b) a,
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 };
