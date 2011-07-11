@@ -1,7 +1,7 @@
 bin_PROGRAMS = cmumble
 
 noinst_HEADERS = cmumble.h varint.h
-nodist_noinst_HEADERS = messages.h mumble.pb-c.h
+nodist_noinst_HEADERS = mumble.pb-c.h messages.h
 
 cmumble_SOURCES = cmumble.c messages.c varint.c
 nodist_cmumble_SOURCES = mumble.pb-c.c
