@@ -17,10 +17,10 @@ BUILT_SOURCES = $(nodist_cmumble_SOURCES) $(nodist_noinst_HEADERS)
 CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = mumble.proto messages.txt gen_messages.sed protoc-c.sh
 
-messages.h: $(top_srcdir)/src/messages.txt $(top_srcdir)/src/gen_messages.sed
-	$(AM_V_GEN) $(SED) -f $(top_srcdir)/src/gen_messages.sed $< > $@
+messages.h: $(srcdir)/messages.txt $(srcdir)/gen_messages.sed
+	$(AM_V_GEN) $(SED) -f $(srcdir)/gen_messages.sed $< > $@
 
-mumble.pb-c.c mumble.pb-c.h: $(top_srcdir)/src/mumble.proto
+mumble.pb-c.c mumble.pb-c.h: $(srcdir)/mumble.proto
 	$(AM_V_GEN) PROTOC_C=$(PROTOBUF_EXECUTABLE) \
-		$(top_srcdir)/src/protoc-c.sh $< $@ 
+		$(srcdir)/protoc-c.sh $< $@ 
 
