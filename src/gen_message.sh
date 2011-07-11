@@ -4,8 +4,8 @@ echo "#define _MESSAGES_H_"
 echo "#define MUMBLE_MSGS \\"
 while read message
 do
-	prefixed_lower_name=$(echo "$message" | sed "s/\(^\|[a-z]\)\([A-Z][A-Z]*\)/\1_\L\2/g")
-	echo -e "\tMUMBLE_MSG(${message}, ${prefixed_lower_name}) \\"
+	underscore_name=$(echo "$message" | sed -e "s/\([a-z]\)\([A-Z]\)/\1_\L\2/g" -e "s/[A-Z]*/\L\0/g")
+	echo -e "\tMUMBLE_MSG(${message}, ${underscore_name}) \\"
 done
 echo
 echo "#endif"

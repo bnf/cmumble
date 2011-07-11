@@ -8,7 +8,7 @@ static const struct {
 	const ProtobufCMessageDescriptor *descriptor;
 	const char *name;
 } messages[] = {
-#define MUMBLE_MSG(a,b) { &mumble_proto_##b##__descriptor, #a },
+#define MUMBLE_MSG(a,b) { &mumble_proto__##b##__descriptor, #a },
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 };
