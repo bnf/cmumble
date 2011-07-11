@@ -15,6 +15,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Check for programs
 AC_PROG_CC
+AC_PROG_SED
 
 PKG_PROG_PKG_CONFIG()
 PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],[], [

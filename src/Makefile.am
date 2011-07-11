@@ -10,8 +10,8 @@ AM_CFLAGS = $(GCC_FLAGS)
 
 $(cmumble_SOURCES): messages.h mumble.pb-c.h
 
-messages.h: messages.txt gen_message.sh
-	$(AM_V_GEN) ./gen_message.sh < $< > $@
+messages.h: messages.txt gen_messages.sed
+	$(AM_V_GEN) $(SED) -f gen_messages.sed $< > $@
 
 mumble.pb-c.c mumble.pb-c.h: mumble.proto
 	$(AM_V_GEN) $(PROTOBUF_EXECUTABLE) --c_out=. $<
