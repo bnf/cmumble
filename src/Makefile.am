@@ -1,19 +1,22 @@
 bin_PROGRAMS = cmumble
 
-noinst_HEADERS = cmumble.h messages.h mumble.pb-c.h varint.h
-cmumble_SOURCES = cmumble.c messages.c mumble.pb-c.c varint.c
-cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) $(GSTREAMER_LIBS) $(CELT_LIBS)
-EXTRA_DIST = mumble.proto messages.txt gen_message.sh
+noinst_HEADERS = cmumble.h varint.h
+nodist_noinst_HEADERS = messages.h mumble.pb-c.h
 
+cmumble_SOURCES = cmumble.c messages.c varint.c
+nodist_cmumble_SOURCES = mumble.pb-c.c
+
+cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) $(GSTREAMER_LIBS) $(CELT_LIBS)
 AM_CPPFLAGS = $(PROTOBUF_CFLAGS) $(GLIB_CFLAGS) $(GIO_CFLAGS) $(GSTREAMER_CFLAGS) $(CELT_CFLAGS)
+
 AM_CFLAGS = $(GCC_FLAGS)
 
-$(cmumble_SOURCES): messages.h mumble.pb-c.h
+BUILT_SOURCES = $(nodist_cmumble_SOURCES) $(nodist_noinst_HEADERS)
+CLEANFILES = $(BUILT_SOURCES)
+EXTRA_DIST = mumble.proto messages.txt gen_messages.sed
 
 messages.h: messages.txt gen_messages.sed
 	$(AM_V_GEN) $(SED) -f gen_messages.sed $< > $@
 
 mumble.pb-c.c mumble.pb-c.h: mumble.proto
 	$(AM_V_GEN) $(PROTOBUF_EXECUTABLE) --c_out=. $<
-
-CLEANFILES = mumble.pb-c.c mumble.pb-c.h messages.h
