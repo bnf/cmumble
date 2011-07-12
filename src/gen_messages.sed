@@ -6,17 +6,16 @@ i\
 #define MUMBLE_MSGS \\
 }
 
-# Duplicate & Seperate with ","
-s/^.*$/\0, \0/
-
-# Next two rules operate on substring after first the ","
+# Backup original message name
+h
 # Prefix uppercase characters that follow a lowercase one
-:a; s/\(, .*[a-z]\)\([A-Z]\)/\1_\2/g; ta
+s/\([a-z]\)\([A-Z]\)/\1_\2/g
 # Lowercase uppercase characters
-s/,.*$/\L\0\E/
-
-# Put template macro around
-s/^.*$/\tMUMBLE_MSG(\0) \\/
+y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
+# Append backup to lowercase underscored message
+G
+# Put template macro around (delete newline between both msgs, swap order)
+s/^\(.*\)\n\(.*\)$/\tMUMBLE_MSG(\2, \1) \\/
 
 $ {
 a\
