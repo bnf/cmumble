@@ -9,11 +9,11 @@ i\
 # Duplicate & Seperate with ","
 s/^.*$/\0, \0/
 
-# Lowercase and prefix uppercase characters that follow a lowercase one
-:a; s/^\([^,]*, .*[a-z]\)\([A-Z]\)/\1_\L\2\E/g; ta
-
-# Lowercase remaining uppercase characters
-s/\([^,]*, [a-z_]*\)\([A-Z]*\)/\1\L\2\E/g
+# Next two rules operate on substring after first the ","
+# Prefix uppercase characters that follow a lowercase one
+:a; s/\(, .*[a-z]\)\([A-Z]\)/\1_\2/g; ta
+# Lowercase uppercase characters
+s/,.*$/\L\0\E/
 
 # Put template macro around
 s/^.*$/\tMUMBLE_MSG(\0) \\/
