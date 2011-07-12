@@ -18,7 +18,7 @@ CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = mumble.proto messages.txt gen_messages.sed protoc-c.sh
 
 messages.h: $(srcdir)/messages.txt $(srcdir)/gen_messages.sed
-	$(AM_V_GEN) $(SED) -f $(srcdir)/gen_messages.sed $< > $@
+	$(AM_V_GEN) LC_ALL=C $(SED) -f $(srcdir)/gen_messages.sed $< > $@
 
 mumble.pb-c.c mumble.pb-c.h: $(srcdir)/mumble.proto
 	$(AM_V_GEN) PROTOC_C=$(PROTOBUF_EXECUTABLE) \
