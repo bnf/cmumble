@@ -1,6 +1,7 @@
 #!/bin/sh
+# @configure_input@
 
-PROTOC_C=${PROTOC_C:-protoc-c}
+PROTOC_C=@PROTOC_C@
 
 build_dir=".protoc-c_build_$(basename $2)/"
 

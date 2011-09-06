@@ -1,4 +1,5 @@
 messages.h
 mumble.pb-c.c
 mumble.pb-c.h
+protoc-c.sh
 cmumble

@@ -13,9 +13,12 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+AC_ARG_VAR([PROTOC_C], [path to protoc-c utility])
+
 # Check for programs
 AC_PROG_CC
 AC_PROG_SED
+AC_PATH_PROG([PROTOC_C], [protoc-c], [false])
 
 PKG_PROG_PKG_CONFIG()
 PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],[], [
@@ -36,14 +39,6 @@ do
 			     AC_MSG_ERROR([gstreamer element $element not found]))
 done
 
-PROTOBUF_EXECUTABLE=`pkg-config --variable=exec_prefix libprotobuf-c`
-if test "x$PROTOBUF_EXECUTABLE" == "x"; then
-	PROTOBUF_EXECUTABLE=protoc-c
-else
-	PROTOBUF_EXECUTABLE="${PROTOBUF_EXECUTABLE}/bin/protoc-c"
-fi
-AC_SUBST([PROTOBUF_EXECUTABLE])
-
 if test "x$GCC" = "xyes"; then
 	GCC_CFLAGS="-Wall -g -Wstrict-prototypes -Wmissing-prototypes -fvisibility=hidden"
 fi
@@ -51,4 +46,5 @@ AC_SUBST([GCC_CFLAGS])
 
 AC_CONFIG_FILES([Makefile
 		 src/Makefile])
+AC_CONFIG_FILES([src/protoc-c.sh], [chmod +x src/protoc-c.sh])
 AC_OUTPUT
