@@ -170,7 +170,7 @@ recv_user_remove(MumbleProto__UserRemove *remove, struct context *ctx)
 		ctx->users = g_list_remove(ctx->users, user);
 		g_free(user->name);
 		/* FIXME: destroy playback pipeline */
-		g_free(user);
+		g_slice_free(struct user, user);
 	}
 }
 
@@ -187,7 +187,7 @@ recv_user_state(MumbleProto__UserState *state, struct context *ctx)
 		return;
 	}
 
-	user = g_new0(struct user, 1);
+	user = g_slice_new0(struct user);
 	if (user == NULL) {
 		g_printerr("Out of memory.\n");
 		exit(1);
