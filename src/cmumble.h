@@ -61,12 +61,18 @@ enum mumble_message {
 #undef MUMBLE_MSG
 };
 
+struct mumble_callbacks {
+#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, struct context *);
+	MUMBLE_MSGS
+#undef MUMBLE_MSG
+};
+
 typedef void (*callback_t)(ProtobufCMessage *msg, struct context *);
 
 void
 send_msg(struct context *ctx, ProtobufCMessage *msg);
 
 void
-recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_size);
+recv_msg(struct context *ctx, const struct mumble_callbacks *callbacks);
 
 #endif

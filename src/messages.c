@@ -72,7 +72,7 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 }
 
 void
-recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_size)
+recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 {
 	uint8_t preamble[PREAMBLE_SIZE];
 	ProtobufCMessage *msg;
@@ -80,6 +80,7 @@ recv_msg(struct context *ctx, const callback_t *callbacks, uint32_t callback_siz
 	int type, len;
 	gssize ret;
 	GInputStream *input = g_io_stream_get_input_stream(ctx->iostream);
+	const callback_t *callbacks = (const callback_t *) cbs;
 
 	ret = g_input_stream_read(input, preamble, PREAMBLE_SIZE, NULL, NULL);
 

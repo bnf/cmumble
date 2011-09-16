@@ -202,34 +202,33 @@ recv_user_state(MumbleProto__UserState *state, struct context *ctx)
 	ctx->users = g_list_prepend(ctx->users, user);
 }
 
-
-static const callback_t callbacks[] = {
-	[Version]		= (callback_t) recv_version,
-	[UDPTunnel]		= (callback_t) recv_udp_tunnel,
-	[Authenticate]		= (callback_t) NULL,
-	[Ping]			= (callback_t) NULL,
-	[Reject]		= (callback_t) NULL,
-	[ServerSync]		= (callback_t) recv_server_sync,
-	[ChannelRemove]		= (callback_t) NULL,
-	[ChannelState]		= (callback_t) recv_channel_state,
-	[UserRemove]		= (callback_t) recv_user_remove,
-	[UserState]		= (callback_t) recv_user_state,
-	[BanList]		= (callback_t) NULL,
-	[TextMessage]		= (callback_t) NULL,
-	[PermissionDenied]	= (callback_t) NULL,
-	[ACL]			= (callback_t) NULL,
-	[QueryUsers]		= (callback_t) NULL,
-	[CryptSetup]		= (callback_t) recv_crypt_setup,
-	[ContextActionModify]	= (callback_t) NULL,
-	[ContextAction]		= (callback_t) NULL,
-	[UserList]		= (callback_t) NULL,
-	[VoiceTarget]		= (callback_t) NULL,
-	[PermissionQuery]	= (callback_t) NULL,
-	[CodecVersion]		= (callback_t) recv_codec_version,
-	[UserStats]		= (callback_t) NULL,
-	[RequestBlob]		= (callback_t) NULL,
-	[ServerConfig]		= (callback_t) NULL,
-	[SuggestConfig]		= (callback_t) NULL,
+static struct mumble_callbacks callbacks = {
+	.Version		= recv_version,
+	.UDPTunnel		= recv_udp_tunnel,
+	.Authenticate		= NULL,
+	.Ping			= NULL,
+	.Reject			= NULL,
+	.ServerSync		= recv_server_sync,
+	.ChannelRemove		= NULL,
+	.ChannelState		= recv_channel_state,
+	.UserRemove		= recv_user_remove,
+	.UserState		= recv_user_state,
+	.BanList		= NULL,
+	.TextMessage		= NULL,
+	.PermissionDenied	= NULL,
+	.ACL			= NULL,
+	.QueryUsers		= NULL,
+	.CryptSetup		= recv_crypt_setup,
+	.ContextActionModify	= NULL,
+	.ContextAction		= NULL,
+	.UserList		= NULL,
+	.VoiceTarget		= NULL,
+	.PermissionQuery	= NULL,
+	.CodecVersion		= recv_codec_version,
+	.UserStats		= NULL,
+	.RequestBlob		= NULL,
+	.ServerConfig		= NULL,
+	.SuggestConfig		= NULL,
 };
 
 static gboolean
@@ -254,7 +253,7 @@ read_cb(GSocket *socket, GIOCondition condition, gpointer data)
 	GInputStream *input = g_io_stream_get_input_stream(ctx->iostream);
 
 	do {
-		recv_msg(ctx, callbacks, G_N_ELEMENTS(callbacks));
+		recv_msg(ctx, &callbacks);
 	} while (g_input_stream_has_pending(input));
 
 	/* FIXME */
