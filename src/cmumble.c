@@ -472,9 +472,13 @@ int main(int argc, char **argv)
 	g_source_attach(source, NULL);
 	g_source_unref(source);
 
+	cmumble_io_init(&ctx);
+
 	g_main_loop_run(ctx.loop);
 
 	g_main_loop_unref(ctx.loop);
+
+	cmumble_io_fini(&ctx);
 
 	return 0;
 }

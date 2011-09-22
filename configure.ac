@@ -20,6 +20,8 @@ AC_PROG_CC
 AC_PROG_SED
 AC_PATH_PROG([PROTOC_C], [protoc-c], [false])
 
+AC_CHECK_LIB(readline, readline)
+
 PKG_PROG_PKG_CONFIG()
 PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],[], [
 	AC_CHECK_LIB([protobuf-c], [protobuf_c_message_pack_to_buffer], [],

@@ -15,8 +15,10 @@
 
 #include "mumble.pb-c.h"
 #include "messages.h"
+#include "io.h"
 
 struct context {
+	struct cmumble_io io;
 	GMainLoop *loop;
 
 	uint32_t session;
