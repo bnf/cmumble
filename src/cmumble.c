@@ -108,15 +108,15 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct context *ctx)
 static void
 recv_version(MumbleProto__Version *version, struct context *ctx)
 {
-	printf("version: 0x%x\n", version->version);
-	printf("release: %s\n", version->release);
+	g_print("version: 0x%x\n", version->version);
+	g_print("release: %s\n", version->release);
 }
 
 static void
 recv_channel_state(MumbleProto__ChannelState *state, struct context *ctx)
 {
-	printf("channel: id: %u, parent: %u, name: %s, description: %s, temporary: %d, position: %d\n",
-	       state->channel_id, state->parent, state->name, state->description, state->temporary, state->position);
+	g_print("channel: id: %u, parent: %u, name: %s, description: %s, temporary: %d, position: %d\n",
+		state->channel_id, state->parent, state->name, state->description, state->temporary, state->position);
 }
 
 static void
@@ -124,7 +124,7 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct context *ctx)
 {
 	ctx->session = sync->session;
 
-	printf("got session: %d\n", ctx->session);
+	g_print("got session: %d\n", ctx->session);
 }
 
 static void
@@ -132,31 +132,33 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct context *ctx)
 {
 	int i;
 
+#if 0
 	if (crypt->has_key) {
-		printf("key: 0x");
+		g_print("key: 0x");
 		for (i = 0; i < crypt->key.len; ++i)
-			printf("%x", crypt->key.data[i]);
-		printf("\n");
+			g_print("%x", crypt->key.data[i]);
+		g_print("\n");
 	}
 	if (crypt->has_client_nonce) {
-		printf("client nonce: 0x");
+		g_print("client nonce: 0x");
 		for (i = 0; i < crypt->client_nonce.len; ++i)
-			printf("%x", crypt->client_nonce.data[i]);
-		printf("\n");
+			g_print("%x", crypt->client_nonce.data[i]);
+		g_print("\n");
 	}
 	if (crypt->has_server_nonce) {
-		printf("server nonce: 0x");
+		g_print("server nonce: 0x");
 		for (i = 0; i < crypt->server_nonce.len; ++i)
-			printf("%x", crypt->server_nonce.data[i]);
-		printf("\n");
+			g_print("%x", crypt->server_nonce.data[i]);
+		g_print("\n");
 	}
+#endif
 }
 
 static void
 recv_codec_version(MumbleProto__CodecVersion *codec, struct context *ctx)
 {
-	printf("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
-	       codec->alpha, codec->beta, codec->prefer_alpha);
+	g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
+		codec->alpha, codec->beta, codec->prefer_alpha);
 }
 
 
