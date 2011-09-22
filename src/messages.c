@@ -45,7 +45,6 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 	int type = -1;
 	int i;
 	ProtobufCBufferSimple buffer = PROTOBUF_C_BUFFER_SIMPLE_INIT(pad);
-	GOutputStream *output = g_io_stream_get_output_stream(ctx->iostream);
 	
 	for (i = 0; i < G_N_ELEMENTS(messages); ++i)
 		if (messages[i].descriptor == msg->descriptor)
@@ -64,14 +63,14 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 	add_preamble(preamble, type, buffer.len);
 
 	g_static_mutex_lock(&write_mutex);
-	g_output_stream_write(output, preamble, PREAMBLE_SIZE, NULL, NULL);
-	g_output_stream_write(output, buffer.data, buffer.len, NULL, NULL);
+	g_output_stream_write(ctx->output, preamble, PREAMBLE_SIZE, NULL, NULL);
+	g_output_stream_write(ctx->output, buffer.data, buffer.len, NULL, NULL);
 	g_static_mutex_unlock(&write_mutex);
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
 }
 
-void
+int
 recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 {
 	uint8_t preamble[PREAMBLE_SIZE];
@@ -79,14 +78,18 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 	gchar *data;
 	int type, len;
 	gssize ret;
-	GInputStream *input = g_io_stream_get_input_stream(ctx->iostream);
 	const callback_t *callbacks = (const callback_t *) cbs;
+	GError *error = NULL;
 
-	ret = g_input_stream_read(input, preamble, PREAMBLE_SIZE, NULL, NULL);
+	ret = g_pollable_input_stream_read_nonblocking(ctx->input,
+						       preamble, PREAMBLE_SIZE,
+						       NULL, &error);
 
 	if (ret <= 0) {
+		if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
+			return 0;
 		g_printerr("read failed: %ld\n", ret);
-		return;
+		return 0;
 	}
 	
 	get_preamble(preamble, &type, &len);
@@ -106,7 +109,7 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 		g_printerr("out of mem\n");
 		g_main_loop_quit (ctx->loop);
 	}
-	ret = g_input_stream_read(input, data, len, NULL, NULL);
+	ret = g_input_stream_read(G_INPUT_STREAM(ctx->input), data, len, NULL, NULL);
 
 	/* tunneled udp data - not a regular protobuf message
 	 * create dummy ProtobufCMessage */
@@ -137,4 +140,6 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 
 	protobuf_c_message_free_unpacked(msg, NULL);
 	g_free(data);
+
+	return 1;
 }

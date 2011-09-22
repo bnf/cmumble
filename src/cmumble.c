@@ -36,7 +36,6 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	GstBuffer *buf;
 	uint8_t data[1024];
 	uint32_t write = 0, pos = 0;
-	GOutputStream *output = g_io_stream_get_output_stream(ctx->iostream);
 	MumbleProto__UDPTunnel tunnel;
 	static int seq = 0;
 
@@ -247,19 +246,15 @@ do_ping(struct context *ctx)
 }
 
 static gboolean
-read_cb(GSocket *socket, GIOCondition condition, gpointer data)
+read_cb(GObject *pollable_stream, gpointer data)
 {
+	GPollableInputStream *input = G_POLLABLE_INPUT_STREAM(pollable_stream);
 	struct context *ctx = data;
-	GInputStream *input = g_io_stream_get_input_stream(ctx->iostream);
+	gint count;
 
 	do {
-		recv_msg(ctx, &callbacks);
-	} while (g_input_stream_has_pending(input));
-
-	/* FIXME */
-	static int i = 0;
-	if (i++ < 2)
-		do_ping(ctx);
+		count = recv_msg(ctx, &callbacks);
+	} while (count && g_pollable_input_stream_is_readable(input));
 
 	return TRUE;
 }
@@ -426,7 +421,15 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	g_object_get(G_OBJECT(ctx.conn), "base-io-stream", &ctx.iostream, NULL);
+	g_object_get(G_OBJECT(ctx.conn),
+		     "input-stream", &ctx.input,
+		     "output-stream", &ctx.output, NULL);
+
+	if (!G_IS_POLLABLE_INPUT_STREAM(ctx.input) ||
+	    !g_pollable_input_stream_can_poll(ctx.input)) {
+		g_printerr("Error: GSocketConnection is not pollable\n");
+		return 1;
+	}
 
 	{
 		MumbleProto__Version version;
@@ -457,14 +460,13 @@ int main(int argc, char **argv)
 	if (setup_recording_gst_pipeline(&ctx) < 0)
 		return 1;
 
-	ctx.sock = g_socket_connection_get_socket(ctx.conn);
-	source = g_socket_create_source(ctx.sock, G_IO_IN | G_IO_ERR, NULL);
-	g_source_set_callback(source, (GSourceFunc)read_cb, &ctx, NULL);
+	source = g_pollable_input_stream_create_source(ctx.input, NULL);
+	g_source_set_callback(source, (GSourceFunc) read_cb, &ctx, NULL);
 	g_source_attach(source, NULL);
 	g_source_unref(source);
 
 	source = g_timeout_source_new_seconds(5);
-	g_source_set_callback(source, (GSourceFunc)do_ping, &ctx, NULL);
+	g_source_set_callback(source, (GSourceFunc) do_ping, &ctx, NULL);
 	g_source_attach(source, NULL);
 	g_source_unref(source);
 

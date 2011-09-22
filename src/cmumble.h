@@ -25,7 +25,9 @@ struct context {
 	GSocketClient *sock_client;
 	GSocketConnection *conn;
 	GSocket *sock;
-	GIOStream *iostream;
+
+	GPollableInputStream *input;
+	GOutputStream *output;
 
 	uint8_t celt_header_packet[sizeof(CELTHeader)];
 	CELTHeader celt_header;
@@ -72,7 +74,7 @@ typedef void (*callback_t)(ProtobufCMessage *msg, struct context *);
 void
 send_msg(struct context *ctx, ProtobufCMessage *msg);
 
-void
+int
 recv_msg(struct context *ctx, const struct mumble_callbacks *callbacks);
 
 #endif
