@@ -1,4 +1,4 @@
-#include "messages.h"
+#include "message.h"
 #include "cmumble.h"
 
 #define PREAMBLE_SIZE 6

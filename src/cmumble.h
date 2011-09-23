@@ -14,7 +14,7 @@
 #include <celt/celt_header.h>
 
 #include "mumble.pb-c.h"
-#include "messages.h"
+#include "message.h"
 #include "io.h"
 #include "connection.h"
 
