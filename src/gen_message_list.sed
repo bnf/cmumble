@@ -1,7 +1,7 @@
 1 {
 i\
-#ifndef _MESSAGES_H_ \
-#define _MESSAGES_H_ \
+#ifndef _MESSAGE_LIST_H_ \
+#define _MESSAGE_LIST_H_ \
 \
 #define MUMBLE_MSGS \\
 }
@@ -20,5 +20,5 @@ s/^\(.*\)\n\(.*\)$/\tMUMBLE_MSG(\2, \1) \\/
 $ {
 a\
 \
-#endif /* _MESSAGES_H_ */
+#endif /* _MESSAGE_LIST_H_ */
 }
