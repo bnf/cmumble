@@ -29,6 +29,8 @@ read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
 		rl_callback_read_char();
 		global_rl_user_data = NULL;
 	}
+
+	return TRUE;
 }
 
 static void
@@ -117,6 +119,8 @@ cmumble_io_init(struct context *ctx)
 	rl_callback_handler_install("cmumble> ", process_line);
 
 	g_set_print_handler(print_preserve_prompt);
+
+	return 0;
 }
 
 int
@@ -130,4 +134,5 @@ cmumble_io_fini(struct context *ctx)
 		return -1;
 	}
 
+	return 0;
 }

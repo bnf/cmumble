@@ -4,6 +4,7 @@
 
 #include "varint.h"
 #include "cmumble.h"
+#include "io.h"
 
 static struct user *
 find_user(struct context *ctx, uint32_t session)
@@ -130,9 +131,9 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct context *ctx)
 static void
 recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct context *ctx)
 {
+#if 0
 	int i;
 
-#if 0
 	if (crypt->has_key) {
 		g_print("key: 0x");
 		for (i = 0; i < crypt->key.len; ++i)
@@ -261,7 +262,7 @@ read_cb(GObject *pollable_stream, gpointer data)
 	return TRUE;
 }
 
-void
+static void
 set_pulse_states(gpointer data, gpointer user_data)
 {
 	GstElement *elm = data;
@@ -298,7 +299,7 @@ out:
 static int
 user_create_playback_pipeline(struct context *ctx, struct user *user)
 {
-	GstElement *pipeline, *sink_bin, *sink;
+	GstElement *pipeline, *sink_bin;
 	GError *error = NULL;
 	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink name=sink";
 

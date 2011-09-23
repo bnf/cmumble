@@ -96,12 +96,12 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 
 	if (!(type >= 0 && type < G_N_ELEMENTS(messages))) {
 		printf("unknown message type: %d\n", type);
-		return;
+		return 0;
 	}
 
 	if (len <= 0) {
 		g_printerr("length 0\n");
-		return;
+		return 0;
 	}
 
 	data = g_malloc(len);
@@ -118,20 +118,20 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 		mumble_proto__udptunnel__init(&udptunnel);
 
 		udptunnel.packet.len = len;
-		udptunnel.packet.data = data;
+		udptunnel.packet.data = (uint8_t *) data;
 		
 		if (callbacks[UDPTunnel])
 			callbacks[UDPTunnel](&udptunnel.base, ctx);
 
 		g_free(data);
-		return;
+		return 0;
 	}
 
 	msg = protobuf_c_message_unpack(messages[type].descriptor, NULL,
-					len, data);
+					len, (uint8_t *) data);
 	if (msg == NULL) {
 		g_printerr("message unpack failure\n");
-		return;
+		return 0;
 	}
 
 	g_print("debug: received message: %s type:%d, len:%d\n", messages[type].name, type, len);
