@@ -12,9 +12,9 @@
 #include "audio.h"
 #include "commands.h"
 
-typedef void (*callback_t)(ProtobufCMessage *msg, struct context *);
+typedef void (*callback_t)(ProtobufCMessage *msg, struct cmumble_context *);
 
-struct context {
+struct cmumble_context {
 	struct cmumble_connection con;
 	struct cmumble_io io;
 	struct cmumble_audio audio;
@@ -31,7 +31,7 @@ struct context {
 	GList *users;
 };
 
-struct user {
+struct cmumble_user {
 	uint32_t session;
 	char *name;
 	uint32_t user_id;

@@ -7,7 +7,7 @@
 #define CHANNELS 1
 
 void
-cmumble_audio_push(struct context *ctx, struct user *user,
+cmumble_audio_push(struct cmumble_context *ctx, struct cmumble_user *user,
 		   const uint8_t *data, gsize size)
 {
 	GstBuffer *gstbuf;
@@ -19,7 +19,7 @@ cmumble_audio_push(struct context *ctx, struct user *user,
 static GstFlowReturn
 pull_buffer(GstAppSink *sink, gpointer user_data)
 {
-	struct context *ctx = user_data;
+	struct cmumble_context *ctx = user_data;
 	GstBuffer *buf;
 	uint8_t data[1024];
 	uint32_t write = 0, pos = 0;
@@ -57,7 +57,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 }
 
 static int
-setup_recording_gst_pipeline(struct context *ctx)
+setup_recording_gst_pipeline(struct cmumble_context *ctx)
 {
 	GstElement *pipeline, *cutter, *sink;
 	GError *error = NULL;
@@ -103,7 +103,7 @@ static void
 set_pulse_states(gpointer data, gpointer user_data)
 {
 	GstElement *elm = data;
-	struct user *user = user_data;
+	struct cmumble_user *user = user_data;
 	GstStructure *props;
 	gchar *name;
 
@@ -134,7 +134,8 @@ out:
 }
 
 int
-cmumble_audio_create_playback_pipeline(struct context *ctx, struct user *user)
+cmumble_audio_create_playback_pipeline(struct cmumble_context *ctx,
+				       struct cmumble_user *user)
 {
 	GstElement *pipeline, *sink_bin;
 	GError *error = NULL;
@@ -173,7 +174,7 @@ cmumble_audio_create_playback_pipeline(struct context *ctx, struct user *user)
 }
 
 static int
-setup_playback_gst_pipeline(struct context *ctx)
+setup_playback_gst_pipeline(struct cmumble_context *ctx)
 {
 	ctx->audio.celt_mode = celt_mode_create(SAMPLERATE,
 						SAMPLERATE / 100, NULL);
@@ -185,7 +186,7 @@ setup_playback_gst_pipeline(struct context *ctx)
 }
 
 int
-cmumble_audio_init(struct context *ctx)
+cmumble_audio_init(struct cmumble_context *ctx)
 {
 	if (setup_playback_gst_pipeline(ctx) < 0)
 		return -1;
@@ -197,7 +198,7 @@ cmumble_audio_init(struct context *ctx)
 }
 
 int
-cmumble_audio_fini(struct context *ctx)
+cmumble_audio_fini(struct cmumble_context *ctx)
 {
 
 	return 0;

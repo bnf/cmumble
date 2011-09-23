@@ -8,9 +8,9 @@
 #include <readline/history.h>
 
 static void
-list_users(struct context *ctx)
+list_users(struct cmumble_context *ctx)
 {
-	struct user *user = NULL;
+	struct cmumble_user *user = NULL;
 	GList *l;
 
 	for (l = ctx->users; l; l = l->next) {
@@ -21,14 +21,14 @@ list_users(struct context *ctx)
 }
 
 static void
-quit(struct context *ctx)
+quit(struct cmumble_context *ctx)
 {
 	rl_already_prompted = 1;
 	g_main_loop_quit(ctx->loop);
 }
 
 static void
-clear(struct context *ctx)
+clear(struct cmumble_context *ctx)
 {
 	rl_clear_screen(0,0);
 	rl_reset_line_state();
@@ -36,7 +36,7 @@ clear(struct context *ctx)
 }
 
 static void
-help(struct context *ctx)
+help(struct cmumble_context *ctx)
 {
 	int i;
 
@@ -54,7 +54,7 @@ static const struct cmumble_command commands[] = {
 };
 
 void
-cmumble_commands_init(struct context *ctx)
+cmumble_commands_init(struct cmumble_context *ctx)
 {
 	ctx->commands = commands;
 }

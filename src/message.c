@@ -39,7 +39,7 @@ get_preamble(uint8_t *buffer, int *type, int *len)
 }
 
 void
-cmumble_send_msg(struct context *ctx, ProtobufCMessage *msg)
+cmumble_send_msg(struct cmumble_context *ctx, ProtobufCMessage *msg)
 {
 	uint8_t pad[128];
 	uint8_t preamble[PREAMBLE_SIZE];
@@ -72,7 +72,7 @@ cmumble_send_msg(struct context *ctx, ProtobufCMessage *msg)
 }
 
 int
-cmumble_recv_msg(struct context *ctx)
+cmumble_recv_msg(struct cmumble_context *ctx)
 {
 	uint8_t preamble[PREAMBLE_SIZE];
 	ProtobufCMessage *msg;

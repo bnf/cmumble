@@ -7,14 +7,14 @@
 #include "io.h"
 #include "connection.h"
 
-static struct user *
-find_user(struct context *ctx, uint32_t session)
+static struct cmumble_user *
+find_user(struct cmumble_context *ctx, uint32_t session)
 {
-	struct user *user = NULL;
+	struct cmumble_user *user = NULL;
 	GList *l;
 
 	for (l = ctx->users; l; l = l->next)
-		if (((struct user *) l->data)->session == session) {
+		if (((struct cmumble_user *) l->data)->session == session) {
 			user = l->data;
 			break;
 		}
@@ -23,12 +23,12 @@ find_user(struct context *ctx, uint32_t session)
 }
 
 static void
-recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct context *ctx)
+recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
 {
 	int64_t session, sequence;
 	uint32_t pos = 1, read = 0;
 	uint8_t frame_len, terminator;
-	struct user *user = NULL;
+	struct cmumble_user *user = NULL;
 	uint8_t *data = tunnel->packet.data;
 	size_t len = tunnel->packet.len;
 
@@ -59,21 +59,21 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct context *ctx)
 }
 
 static void
-recv_version(MumbleProto__Version *version, struct context *ctx)
+recv_version(MumbleProto__Version *version, struct cmumble_context *ctx)
 {
 	g_print("version: 0x%x\n", version->version);
 	g_print("release: %s\n", version->release);
 }
 
 static void
-recv_channel_state(MumbleProto__ChannelState *state, struct context *ctx)
+recv_channel_state(MumbleProto__ChannelState *state, struct cmumble_context *ctx)
 {
 	g_print("channel: id: %u, parent: %u, name: %s, description: %s, temporary: %d, position: %d\n",
 		state->channel_id, state->parent, state->name, state->description, state->temporary, state->position);
 }
 
 static void
-recv_server_sync(MumbleProto__ServerSync *sync, struct context *ctx)
+recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble_context *ctx)
 {
 	ctx->session = sync->session;
 
@@ -81,7 +81,7 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct context *ctx)
 }
 
 static void
-recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct context *ctx)
+recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble_context *ctx)
 {
 #if 0
 	int i;
@@ -108,7 +108,7 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct context *ctx)
 }
 
 static void
-recv_codec_version(MumbleProto__CodecVersion *codec, struct context *ctx)
+recv_codec_version(MumbleProto__CodecVersion *codec, struct cmumble_context *ctx)
 {
 	g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
 		codec->alpha, codec->beta, codec->prefer_alpha);
@@ -116,29 +116,29 @@ recv_codec_version(MumbleProto__CodecVersion *codec, struct context *ctx)
 
 
 static void
-recv_user_remove(MumbleProto__UserRemove *remove, struct context *ctx)
+recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble_context *ctx)
 {
-	struct user *user = NULL;
+	struct cmumble_user *user = NULL;
 
 	if ((user = find_user(ctx, remove->session))) {
 		ctx->users = g_list_remove(ctx->users, user);
 		g_free(user->name);
 		/* FIXME: destroy playback pipeline */
-		g_slice_free(struct user, user);
+		g_slice_free(struct cmumble_user, user);
 	}
 }
 
 static void
-recv_user_state(MumbleProto__UserState *state, struct context *ctx)
+recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 {
-	struct user *user = NULL;
+	struct cmumble_user *user = NULL;
 
 	if ((user = find_user(ctx, state->session))) {
 		/* update */
 		return;
 	}
 
-	user = g_slice_new0(struct user);
+	user = g_slice_new0(struct cmumble_user);
 	if (user == NULL) {
 		g_printerr("Out of memory.\n");
 		exit(1);
@@ -156,7 +156,7 @@ recv_user_state(MumbleProto__UserState *state, struct context *ctx)
 
 
 static const struct {
-#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, struct context *);
+#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, struct cmumble_context *);
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 } callbacks = {
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 {
 	char *host = "localhost";
 	unsigned int port = 64738;
-	struct context ctx;
+	struct cmumble_context ctx;
 
 	if (argc >= 3)
 		host = argv[2];

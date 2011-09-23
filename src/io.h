@@ -10,12 +10,12 @@ struct cmumble_io {
 	struct termios term;
 };
 
-struct context;
+struct cmumble_context;
 
 int
-cmumble_io_init(struct context *ctx);
+cmumble_io_init(struct cmumble_context *ctx);
 
 int
-cmumble_io_fini(struct context *ctx);
+cmumble_io_fini(struct cmumble_context *ctx);
 
 #endif /* _IO_H_ */

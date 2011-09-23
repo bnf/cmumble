@@ -8,7 +8,7 @@ static gboolean
 read_cb(GObject *pollable_stream, gpointer data)
 {
 	GPollableInputStream *input = G_POLLABLE_INPUT_STREAM(pollable_stream);
-	struct context *ctx = data;
+	struct cmumble_context *ctx = data;
 	gint count;
 
 	do {
@@ -19,7 +19,7 @@ read_cb(GObject *pollable_stream, gpointer data)
 }
 
 static gboolean
-do_ping(struct context *ctx)
+do_ping(struct cmumble_context *ctx)
 {
 	MumbleProto__Ping ping;
 	GTimeVal tv;
@@ -34,7 +34,7 @@ do_ping(struct context *ctx)
 }
 
 static void
-setup_ping_timer(struct context *ctx)
+setup_ping_timer(struct cmumble_context *ctx)
 {
 	GSource *source;
 
@@ -45,7 +45,7 @@ setup_ping_timer(struct context *ctx)
 }
 
 int
-cmumble_connection_init(struct context *ctx,
+cmumble_connection_init(struct cmumble_context *ctx,
 			const char *host, int port)
 {
 	struct cmumble_connection *con = &ctx->con;
@@ -90,7 +90,7 @@ cmumble_connection_init(struct context *ctx,
 }
 
 int
-cmumble_connection_fini(struct context *ctx)
+cmumble_connection_fini(struct cmumble_context *ctx)
 {
 	g_source_remove(g_source_get_id(ctx->con.source));
 	g_source_unref(ctx->con.source);
