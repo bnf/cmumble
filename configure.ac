@@ -20,6 +20,8 @@ AC_PROG_CC
 AC_PROG_SED
 AC_PATH_PROG([PROTOC_C], [protoc-c], [false])
 
+AC_CHECK_LIB([ncurses], [tputs],
+	     [], [AC_MSG_ERROR([ncurses needed for libreadline])])
 AC_CHECK_LIB([readline], [readline],
 	     [], [AC_MSG_ERROR([libreadline not found])], [-lncurses])
 
