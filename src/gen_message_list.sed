@@ -15,7 +15,7 @@ y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/
 # Append backup to lowercase underscored message
 G
 # Put template macro around (delete newline between both msgs, swap order)
-s/^\(.*\)\n\(.*\)$/\tMUMBLE_MSG(\2, \1) \\/
+s/^\(.*\)\n\(.*\)$/	MUMBLE_MSG(\2, \1) \\/
 
 $ {
 a\
