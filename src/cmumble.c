@@ -47,7 +47,7 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct context *ctx)
 		frame_len  = data[pos] & 0x7F;
 		terminator = data[pos] & 0x80;
 		pos += 1;
-		
+
 		if (frame_len == 0 || frame_len > len-pos)
 			break;
 

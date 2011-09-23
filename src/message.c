@@ -46,7 +46,7 @@ cmumble_send_msg(struct context *ctx, ProtobufCMessage *msg)
 	int type = -1;
 	int i;
 	ProtobufCBufferSimple buffer = PROTOBUF_C_BUFFER_SIMPLE_INIT(pad);
-	
+
 	for (i = 0; i < G_N_ELEMENTS(messages); ++i)
 		if (messages[i].descriptor == msg->descriptor)
 			type = i;
@@ -93,7 +93,7 @@ cmumble_recv_msg(struct context *ctx)
 		g_printerr("read failed: %ld\n", ret);
 		return 0;
 	}
-	
+
 	get_preamble(preamble, &type, &len);
 
 	if (!(type >= 0 && type < G_N_ELEMENTS(messages))) {
@@ -122,7 +122,7 @@ cmumble_recv_msg(struct context *ctx)
 
 		udptunnel.packet.len = len;
 		udptunnel.packet.data = (uint8_t *) data;
-		
+
 		if (ctx->callbacks[UDPTunnel])
 			ctx->callbacks[UDPTunnel](&udptunnel.base, ctx);
 

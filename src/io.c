@@ -68,7 +68,7 @@ process_line(char *line)
 	struct context *ctx = global_rl_user_data;
 
 	g_assert(global_rl_user_data);
-	
+
 	rl_reset_line_state();
 
 	if (line == NULL) {
@@ -96,9 +96,9 @@ int
 cmumble_io_init(struct context *ctx)
 {
 	struct termios term;
-	
+
 	ctx->io.input_channel = g_io_channel_unix_new(STDIN_FILENO);
-	
+
 	g_io_add_watch(ctx->io.input_channel, G_IO_IN | G_IO_HUP,
 		       read_cb, ctx);
 

@@ -11,7 +11,7 @@ cmumble_audio_push(struct context *ctx, struct user *user,
 		   const uint8_t *data, gsize size)
 {
 	GstBuffer *gstbuf;
-	
+
 	gstbuf = gst_app_buffer_new(g_memdup(data, size), size, g_free, NULL);
 	gst_app_src_push_buffer(user->src, gstbuf);
 }
@@ -64,8 +64,8 @@ setup_recording_gst_pipeline(struct context *ctx)
 	GstCaps *caps;
 
 	char *desc = "autoaudiosrc ! cutter name=cutter ! audioresample ! audioconvert ! "
-		     "audio/x-raw-int,channels=1,depth=16,rate=48000,signed=TRUE,width=16 ! "
-		     "celtenc ! appsink name=sink";
+		"audio/x-raw-int,channels=1,depth=16,rate=48000,signed=TRUE,width=16 ! "
+		"celtenc ! appsink name=sink";
 
 	pipeline = gst_parse_launch(desc, &error);
 	if (error) {
@@ -79,11 +79,11 @@ setup_recording_gst_pipeline(struct context *ctx)
 	cutter = gst_bin_get_by_name(GST_BIN(pipeline), "cutter");
 	g_object_set(G_OBJECT(cutter),
 		     "threshold_dB", -45.0, "leaky", TRUE, NULL);
-	
+
 	gst_app_sink_set_emit_signals(ctx->audio.sink, TRUE);
 	gst_app_sink_set_drop(ctx->audio.sink, FALSE);;
 	g_signal_connect(sink, "new-buffer", G_CALLBACK(pull_buffer), ctx);
-	
+
 	caps = gst_caps_new_simple("audio/x-celt",
 				   "rate", G_TYPE_INT, SAMPLERATE,
 				   "channels", G_TYPE_INT, 1,
@@ -124,7 +124,7 @@ set_pulse_states(gpointer data, gpointer user_data)
 				  "application.name", G_TYPE_STRING, name,
 				  "media.role", G_TYPE_STRING, "phone",
 				  NULL);
-					
+
 	g_object_set(elm, "stream-properties", props, NULL);
 	gst_structure_free(props);
 	g_free(name);
@@ -176,7 +176,7 @@ static int
 setup_playback_gst_pipeline(struct context *ctx)
 {
 	ctx->audio.celt_mode = celt_mode_create(SAMPLERATE,
-					  SAMPLERATE / 100, NULL);
+						SAMPLERATE / 100, NULL);
 	celt_header_init(&ctx->audio.celt_header, ctx->audio.celt_mode, CHANNELS);
 	celt_header_to_packet(&ctx->audio.celt_header,
 			      ctx->audio.celt_header_packet, sizeof(CELTHeader));
