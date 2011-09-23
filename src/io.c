@@ -66,6 +66,7 @@ static void
 process_line(char *line)
 {
 	struct context *ctx = global_rl_user_data;
+	int i;
 
 	g_assert(global_rl_user_data);
 
@@ -79,14 +80,15 @@ process_line(char *line)
 		return;
 	}
 
-	if (strcmp(line, "quit") == 0) {
-		rl_already_prompted = 1;
-		g_main_loop_quit(ctx->loop);
-	} else if (strcmp(line, "clear") == 0) {
-		rl_clear_screen(0,0);
-		rl_reset_line_state();
-	} else
-		g_print("readline: %s\n", line);
+	for (i = 0; ctx->commands[i].name; ++i) {
+		if (strcmp(line, ctx->commands[i].name) == 0) {
+			ctx->commands[i].callback(ctx);
+			break;
+		}
+	}
+
+	if (ctx->commands[i].name == NULL)
+		g_print("Unknown command: %s\n", line);
 
 	if (strlen(line))
 		add_history(line);

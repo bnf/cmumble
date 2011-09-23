@@ -10,6 +10,7 @@
 #include "io.h"
 #include "connection.h"
 #include "audio.h"
+#include "commands.h"
 
 typedef void (*callback_t)(ProtobufCMessage *msg, struct context *);
 
@@ -18,6 +19,8 @@ struct context {
 	struct cmumble_io io;
 	struct cmumble_audio audio;
 	const callback_t *callbacks;
+	const struct cmumble_command *commands;
+
 	GMainLoop *loop;
 
 	uint32_t session;

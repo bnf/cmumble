@@ -1,9 +1,11 @@
 bin_PROGRAMS = cmumble
 
-noinst_HEADERS = cmumble.h message.h varint.h io.h connection.h audio.h
+noinst_HEADERS = cmumble.h message.h varint.h io.h \
+		 connection.h audio.h commands.h
 nodist_noinst_HEADERS = mumble.pb-c.h message_list.h
 
-cmumble_SOURCES = cmumble.c message.c varint.c io.c connection.c audio.c
+cmumble_SOURCES = cmumble.c message.c varint.c io.c \
+		  connection.c audio.c commands.c
 nodist_cmumble_SOURCES = mumble.pb-c.c
 
 cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) \

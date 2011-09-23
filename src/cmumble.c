@@ -207,6 +207,7 @@ int main(int argc, char **argv)
 	ctx.loop = g_main_loop_new(NULL, FALSE);
 	ctx.callbacks = (const callback_t *) &callbacks;
 
+	cmumble_commands_init(&ctx);
 	if (cmumble_connection_init(&ctx, host, port) < 0)
 		return 1;
 
