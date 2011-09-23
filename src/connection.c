@@ -12,7 +12,7 @@ read_cb(GObject *pollable_stream, gpointer data)
 	gint count;
 
 	do {
-		count = recv_msg(ctx);
+		count = cmumble_recv_msg(ctx);
 	} while (count && g_pollable_input_stream_is_readable(input));
 
 	return TRUE;
@@ -28,7 +28,7 @@ do_ping(struct context *ctx)
 	mumble_proto__ping__init(&ping);
 	ping.timestamp = tv.tv_sec;
 	ping.resync = 1;
-	send_msg(ctx, &ping.base);
+	cmumble_send_msg(ctx, &ping.base);
 
 	return TRUE;
 }

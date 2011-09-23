@@ -66,7 +66,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	mumble_proto__udptunnel__init(&tunnel);
 	tunnel.packet.data = data;
 	tunnel.packet.len = pos;
-	send_msg(ctx, &tunnel.base);
+	cmumble_send_msg(ctx, &tunnel.base);
 
 	return GST_FLOW_OK;
 }
@@ -396,7 +396,7 @@ int main(int argc, char **argv)
 		version.version = 0x010203;
 		version.release = PACKAGE_STRING;
 		version.os = "Gentoo/Linux";
-		send_msg(&ctx, &version.base);
+		cmumble_send_msg(&ctx, &version.base);
 	}
 
 	{
@@ -406,7 +406,7 @@ int main(int argc, char **argv)
 		authenticate.password = "";
 		authenticate.n_celt_versions = 1;
 		authenticate.celt_versions = (int32_t[]) { 0x8000000b };
-		send_msg(&ctx, &authenticate.base);
+		cmumble_send_msg(&ctx, &authenticate.base);
 	}
 
 	gst_init(&argc, &argv);

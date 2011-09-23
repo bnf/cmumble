@@ -13,9 +13,9 @@ enum mumble_message {
 struct context;
 
 void
-send_msg(struct context *ctx, ProtobufCMessage *msg);
+cmumble_send_msg(struct context *ctx, ProtobufCMessage *msg);
 
 int
-recv_msg(struct context *ctx);
+cmumble_recv_msg(struct context *ctx);
 
 #endif /* _MESSAGES_H_ */
