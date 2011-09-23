@@ -14,7 +14,7 @@
 #include <celt/celt_header.h>
 
 #include "mumble.pb-c.h"
-#include "message_list.h"
+#include "messages.h"
 #include "io.h"
 #include "connection.h"
 
@@ -56,17 +56,5 @@ enum udp_message_type {
 	udp_voice_speex,
 	udp_voice_celt_beta
 };
-
-enum mumble_message {
-#define MUMBLE_MSG(a,b) a,
-	MUMBLE_MSGS
-#undef MUMBLE_MSG
-};
-
-void
-send_msg(struct context *ctx, ProtobufCMessage *msg);
-
-int
-recv_msg(struct context *ctx);
 
 #endif

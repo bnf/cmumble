@@ -1,6 +1,6 @@
 bin_PROGRAMS = cmumble
 
-noinst_HEADERS = cmumble.h varint.h io.h connection.h
+noinst_HEADERS = cmumble.h messages.h varint.h io.h connection.h
 nodist_noinst_HEADERS = mumble.pb-c.h message_list.h
 
 cmumble_SOURCES = cmumble.c messages.c varint.c io.c connection.c
