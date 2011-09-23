@@ -63,8 +63,8 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 	add_preamble(preamble, type, buffer.len);
 
 	g_static_mutex_lock(&write_mutex);
-	g_output_stream_write(ctx->output, preamble, PREAMBLE_SIZE, NULL, NULL);
-	g_output_stream_write(ctx->output, buffer.data, buffer.len, NULL, NULL);
+	g_output_stream_write(ctx->con.output, preamble, PREAMBLE_SIZE, NULL, NULL);
+	g_output_stream_write(ctx->con.output, buffer.data, buffer.len, NULL, NULL);
 	g_static_mutex_unlock(&write_mutex);
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
@@ -81,7 +81,7 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 	const callback_t *callbacks = (const callback_t *) cbs;
 	GError *error = NULL;
 
-	ret = g_pollable_input_stream_read_nonblocking(ctx->input,
+	ret = g_pollable_input_stream_read_nonblocking(ctx->con.input,
 						       preamble, PREAMBLE_SIZE,
 						       NULL, &error);
 
@@ -109,7 +109,8 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 		g_printerr("out of mem\n");
 		g_main_loop_quit (ctx->loop);
 	}
-	ret = g_input_stream_read(G_INPUT_STREAM(ctx->input), data, len, NULL, NULL);
+	ret = g_input_stream_read(G_INPUT_STREAM(ctx->con.input),
+				  data, len, NULL, NULL);
 
 	/* tunneled udp data - not a regular protobuf message
 	 * create dummy ProtobufCMessage */

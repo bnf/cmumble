@@ -5,6 +5,7 @@
 #include "varint.h"
 #include "cmumble.h"
 #include "io.h"
+#include "connection.h"
 
 static struct user *
 find_user(struct context *ctx, uint32_t session)
@@ -233,35 +234,6 @@ static struct mumble_callbacks callbacks = {
 	.SuggestConfig		= NULL,
 };
 
-static gboolean
-do_ping(struct context *ctx)
-{
-	MumbleProto__Ping ping;
-	GTimeVal tv;
-
-	g_get_current_time(&tv);
-	mumble_proto__ping__init(&ping);
-	ping.timestamp = tv.tv_sec;
-	ping.resync = 1;
-	send_msg(ctx, &ping.base);
-
-	return TRUE;
-}
-
-static gboolean
-read_cb(GObject *pollable_stream, gpointer data)
-{
-	GPollableInputStream *input = G_POLLABLE_INPUT_STREAM(pollable_stream);
-	struct context *ctx = data;
-	gint count;
-
-	do {
-		count = recv_msg(ctx, &callbacks);
-	} while (count && g_pollable_input_stream_is_readable(input));
-
-	return TRUE;
-}
-
 static void
 set_pulse_states(gpointer data, gpointer user_data)
 {
@@ -396,8 +368,6 @@ int main(int argc, char **argv)
 	char *host = "localhost";
 	unsigned int port = 64738;
 	struct context ctx;
-	GError *error = NULL;
-	GSource *source;
 
 	if (argc >= 3)
 		host = argv[2];
@@ -409,30 +379,10 @@ int main(int argc, char **argv)
 	ctx.users = NULL;
 
 	g_type_init();
-	ctx.sock_client = g_socket_client_new();
-	g_socket_client_set_tls(ctx.sock_client, TRUE);
-	g_socket_client_set_tls_validation_flags(ctx.sock_client,
-						 G_TLS_CERTIFICATE_INSECURE);
-	g_socket_client_set_family(ctx.sock_client, G_SOCKET_FAMILY_IPV4);
-	g_socket_client_set_protocol(ctx.sock_client, G_SOCKET_PROTOCOL_TCP);
-	g_socket_client_set_socket_type(ctx.sock_client, G_SOCKET_TYPE_STREAM);
+	ctx.loop = g_main_loop_new(NULL, FALSE);
 
-	ctx.conn = g_socket_client_connect_to_host(ctx.sock_client,
-						   host, port, NULL, &error);
-	if (error) {
-		g_printerr("connect failed: %s\n", error->message);
+	if (cmumble_connection_init(&ctx, host, port, &callbacks) < 0)
 		return 1;
-	}
-
-	g_object_get(G_OBJECT(ctx.conn),
-		     "input-stream", &ctx.input,
-		     "output-stream", &ctx.output, NULL);
-
-	if (!G_IS_POLLABLE_INPUT_STREAM(ctx.input) ||
-	    !g_pollable_input_stream_can_poll(ctx.input)) {
-		g_printerr("Error: GSocketConnection is not pollable\n");
-		return 1;
-	}
 
 	{
 		MumbleProto__Version version;
@@ -455,23 +405,11 @@ int main(int argc, char **argv)
 
 	gst_init(&argc, &argv);
 
-	ctx.loop = g_main_loop_new(NULL, FALSE);
-
 	if (setup_playback_gst_pipeline(&ctx) < 0)
 		return 1;
 
 	if (setup_recording_gst_pipeline(&ctx) < 0)
 		return 1;
-
-	source = g_pollable_input_stream_create_source(ctx.input, NULL);
-	g_source_set_callback(source, (GSourceFunc) read_cb, &ctx, NULL);
-	g_source_attach(source, NULL);
-	g_source_unref(source);
-
-	source = g_timeout_source_new_seconds(5);
-	g_source_set_callback(source, (GSourceFunc) do_ping, &ctx, NULL);
-	g_source_attach(source, NULL);
-	g_source_unref(source);
 
 	cmumble_io_init(&ctx);
 
@@ -480,6 +418,7 @@ int main(int argc, char **argv)
 	g_main_loop_unref(ctx.loop);
 
 	cmumble_io_fini(&ctx);
+	cmumble_connection_fini(&ctx);
 
 	return 0;
 }

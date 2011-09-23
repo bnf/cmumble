@@ -16,20 +16,15 @@
 #include "mumble.pb-c.h"
 #include "messages.h"
 #include "io.h"
+#include "connection.h"
 
 struct context {
+	struct cmumble_connection con;
 	struct cmumble_io io;
 	GMainLoop *loop;
 
 	uint32_t session;
 	gboolean authenticated;
-
-	GSocketClient *sock_client;
-	GSocketConnection *conn;
-	GSocket *sock;
-
-	GPollableInputStream *input;
-	GOutputStream *output;
 
 	uint8_t celt_header_packet[sizeof(CELTHeader)];
 	CELTHeader celt_header;
