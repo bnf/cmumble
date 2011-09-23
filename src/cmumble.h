@@ -18,9 +18,12 @@
 #include "io.h"
 #include "connection.h"
 
+typedef void (*callback_t)(ProtobufCMessage *msg, struct context *);
+
 struct context {
 	struct cmumble_connection con;
 	struct cmumble_io io;
+	const callback_t *callbacks;
 	GMainLoop *loop;
 
 	uint32_t session;
@@ -60,18 +63,10 @@ enum mumble_message {
 #undef MUMBLE_MSG
 };
 
-struct mumble_callbacks {
-#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, struct context *);
-	MUMBLE_MSGS
-#undef MUMBLE_MSG
-};
-
-typedef void (*callback_t)(ProtobufCMessage *msg, struct context *);
-
 void
 send_msg(struct context *ctx, ProtobufCMessage *msg);
 
 int
-recv_msg(struct context *ctx, const struct mumble_callbacks *callbacks);
+recv_msg(struct context *ctx);
 
 #endif

@@ -12,17 +12,13 @@ struct cmumble_connection {
 	GOutputStream *output;
 
 	GSource *source;
-
-	struct mumble_callbacks *callbacks;
 };
 
 struct context;
-struct mumble_callbacks;
 
 int
 cmumble_connection_init(struct context *ctx,
-			const char *host, int port,
-			struct mumble_callbacks *cbs);
+			const char *host, int port);
 
 int
 cmumble_connection_fini(struct context *ctx);

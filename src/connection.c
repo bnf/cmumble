@@ -12,7 +12,7 @@ read_cb(GObject *pollable_stream, gpointer data)
 	gint count;
 
 	do {
-		count = recv_msg(ctx, ctx->con.callbacks);
+		count = recv_msg(ctx);
 	} while (count && g_pollable_input_stream_is_readable(input));
 
 	return TRUE;
@@ -46,13 +46,11 @@ setup_ping_timer(struct context *ctx)
 
 int
 cmumble_connection_init(struct context *ctx,
-			const char *host, int port,
-			struct mumble_callbacks *callbacks)
+			const char *host, int port)
 {
 	struct cmumble_connection *con = &ctx->con;
 	GError *error = NULL;
 
-	con->callbacks = callbacks;
 	con->sock_client = g_socket_client_new();
 	g_socket_client_set_tls(con->sock_client, TRUE);
 	g_socket_client_set_tls_validation_flags(con->sock_client,

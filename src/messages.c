@@ -71,15 +71,16 @@ send_msg(struct context *ctx, ProtobufCMessage *msg)
 }
 
 int
-recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
+recv_msg(struct context *ctx)
 {
 	uint8_t preamble[PREAMBLE_SIZE];
 	ProtobufCMessage *msg;
 	gchar *data;
 	int type, len;
 	gssize ret;
-	const callback_t *callbacks = (const callback_t *) cbs;
 	GError *error = NULL;
+
+	g_assert(ctx->callbacks);
 
 	ret = g_pollable_input_stream_read_nonblocking(ctx->con.input,
 						       preamble, PREAMBLE_SIZE,
@@ -121,8 +122,8 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 		udptunnel.packet.len = len;
 		udptunnel.packet.data = (uint8_t *) data;
 		
-		if (callbacks[UDPTunnel])
-			callbacks[UDPTunnel](&udptunnel.base, ctx);
+		if (ctx->callbacks[UDPTunnel])
+			ctx->callbacks[UDPTunnel](&udptunnel.base, ctx);
 
 		g_free(data);
 		return 0;
@@ -136,8 +137,8 @@ recv_msg(struct context *ctx, const struct mumble_callbacks *cbs)
 	}
 
 	g_print("debug: received message: %s type:%d, len:%d\n", messages[type].name, type, len);
-	if (callbacks[type])
-		callbacks[type](msg, ctx);
+	if (ctx->callbacks[type])
+		ctx->callbacks[type](msg, ctx);
 
 	protobuf_c_message_free_unpacked(msg, NULL);
 	g_free(data);

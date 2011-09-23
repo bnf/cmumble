@@ -205,7 +205,12 @@ recv_user_state(MumbleProto__UserState *state, struct context *ctx)
 	ctx->users = g_list_prepend(ctx->users, user);
 }
 
-static struct mumble_callbacks callbacks = {
+
+static const struct {
+#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, struct context *);
+	MUMBLE_MSGS
+#undef MUMBLE_MSG
+} callbacks = {
 	.Version		= recv_version,
 	.UDPTunnel		= recv_udp_tunnel,
 	.Authenticate		= NULL,
@@ -380,8 +385,9 @@ int main(int argc, char **argv)
 
 	g_type_init();
 	ctx.loop = g_main_loop_new(NULL, FALSE);
+	ctx.callbacks = (const callback_t *) &callbacks;
 
-	if (cmumble_connection_init(&ctx, host, port, &callbacks) < 0)
+	if (cmumble_connection_init(&ctx, host, port) < 0)
 		return 1;
 
 	{
