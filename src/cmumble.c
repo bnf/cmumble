@@ -239,20 +239,43 @@ cmumble_protocol_init(struct cmumble_context *ctx)
 	g_source_unref(source);
 }
 
+gchar *user = "unkown";
+gchar *host = "localhost";
+gint port = 64738;
+
+static GOptionEntry entries[] = {
+	{
+		"user", 'u', 0, G_OPTION_ARG_STRING, &user,
+		"user name", "N"
+	},
+	{
+		"host", 'h', 0, G_OPTION_ARG_STRING, &host,
+		"Host name or ip address of the mumble server", "N"
+	},
+	{
+		"port", 'p', 0, G_OPTION_ARG_INT, &port,
+		"port of the mumble server", "N"
+	},
+  	{ NULL }
+};
+
 int main(int argc, char **argv)
 {
-	char *host = "localhost";
-	unsigned int port = 64738;
 	struct cmumble_context ctx;
+	GError *error = NULL;
+	GOptionContext *context;
 
-	if (argc >= 3)
-		host = argv[2];
-	if (argc >= 4)
-		port = atoi(argv[3]);
+	context = g_option_context_new ("command line mumble client");
+	g_option_context_add_main_entries (context, entries, "cmumble");
+
+	if (!g_option_context_parse (context, &argc, &argv, &error)) {
+		g_print("option parsing failed: %s\n", error->message);
+		exit(1);
+	}
 
 	memset(&ctx, 0, sizeof(ctx));
 
-	ctx.user_name = argv[1];
+	ctx.user_name = user;
 	ctx.users = NULL;
 
 	g_type_init();
