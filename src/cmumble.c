@@ -22,6 +22,21 @@ find_user(struct cmumble_context *ctx, uint32_t session)
 	return user;
 }
 
+static struct cmumble_channel *
+find_channel(struct cmumble_context *ctx, uint32_t id)
+{
+	struct cmumble_channel *channel = NULL;
+	GList *l;
+
+	for (l = ctx->channels; l; l = l->next)
+		if (((struct cmumble_channel *) l->data)->id == id) {
+			channel = l->data;
+			break;
+		}
+
+	return channel;
+}
+
 static void
 recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
 {
@@ -68,8 +83,32 @@ recv_version(MumbleProto__Version *version, struct cmumble_context *ctx)
 static void
 recv_channel_state(MumbleProto__ChannelState *state, struct cmumble_context *ctx)
 {
-	g_print("channel: id: %u, parent: %u, name: %s, description: %s, temporary: %d, position: %d\n",
-		state->channel_id, state->parent, state->name, state->description, state->temporary, state->position);
+	struct cmumble_channel *channel;
+
+	channel = find_channel(ctx, state->channel_id);
+	if (channel == NULL) {
+		channel = g_slice_new0(struct cmumble_channel);
+		if (channel == NULL) {
+			g_printerr("Out of memory.\n");
+			exit(1);
+		}
+		ctx->channels = g_list_prepend(ctx->channels, channel);
+
+		if (channel->name)
+			g_free(channel->name);
+		if (channel->description)
+			g_free(channel->description);
+	}
+
+	channel->id = state->channel_id;
+	if (state->name)
+		channel->name = g_strdup(state->name);
+	channel->parent = state->parent;
+	if (state->description)
+		channel->description = g_strdup(state->description);
+	
+	channel->temporary = state->temporary;
+	channel->position = state->position;
 }
 
 static void

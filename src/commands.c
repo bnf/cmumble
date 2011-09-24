@@ -21,6 +21,19 @@ list_users(struct cmumble_context *ctx)
 }
 
 static void
+list_channels(struct cmumble_context *ctx)
+{
+	struct cmumble_channel *channel = NULL;
+	GList *l;
+
+	for (l = ctx->channels; l; l = l->next) {
+		channel = l->data;
+
+		g_print("%4d: %s\n", channel->id, channel->name);
+	}
+}
+
+static void
 quit(struct cmumble_context *ctx)
 {
 	rl_already_prompted = 1;
@@ -47,6 +60,7 @@ help(struct cmumble_context *ctx)
 
 static const struct cmumble_command commands[] = {
 	{ "lu", list_users, "list users" },
+	{ "lc", list_channels, "list channels" },
 	{ "clear", clear, "clear screen" },
 	{ "help", help, "show this help" },
 	{ "quit", quit, "quit " PACKAGE },

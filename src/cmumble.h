@@ -31,6 +31,7 @@ struct cmumble_context {
 	int64_t sequence;
 
 	GList *users;
+	GList *channels;
 };
 
 struct cmumble_user {
@@ -40,6 +41,16 @@ struct cmumble_user {
 
 	GstElement *pipeline;
 	GstAppSrc *src;
+};
+
+struct cmumble_channel {
+	uint32_t id;
+	uint32_t parent;
+	char *name;
+	char *description;
+	
+	gboolean temporary;
+	int32_t position;
 };
 
 enum udp_message_type {
