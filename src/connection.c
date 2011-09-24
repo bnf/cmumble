@@ -18,30 +18,39 @@ read_cb(GObject *pollable_stream, gpointer data)
 	return TRUE;
 }
 
-static gboolean
-do_ping(struct cmumble_context *ctx)
-{
-	MumbleProto__Ping ping;
-	GTimeVal tv;
-
-	g_get_current_time(&tv);
-	mumble_proto__ping__init(&ping);
-	ping.timestamp = tv.tv_sec;
-	ping.resync = 1;
-	cmumble_send_msg(ctx, &ping.base);
-
-	return TRUE;
-}
-
 static void
-setup_ping_timer(struct cmumble_context *ctx)
+connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
-	GSource *source;
+	struct cmumble_context *ctx = user_data;
+	struct cmumble_connection *con = &ctx->con;
+	GError *error = NULL;
 
-	source = g_timeout_source_new_seconds(5);
-	g_source_set_callback(source, (GSourceFunc) do_ping, ctx, NULL);
-	g_source_attach(source, NULL);
-	g_source_unref(source);
+	con->conn = g_socket_client_connect_to_host_finish (con->sock_client,
+							    res, &error);
+	if (error) {
+		g_printerr("connect failed: %s\n", error->message);
+		g_main_loop_quit(ctx->loop);
+		g_error_free(error);
+		return;
+	}
+
+	g_object_get(G_OBJECT(con->conn),
+		     "input-stream", &con->input,
+		     "output-stream", &con->output, NULL);
+
+	if (!G_IS_POLLABLE_INPUT_STREAM(con->input) ||
+	    !g_pollable_input_stream_can_poll(con->input)) {
+		g_printerr("Error: GSocketConnection is not pollable\n");
+		g_main_loop_quit(ctx->loop);
+		return;
+	}
+
+	con->source = g_pollable_input_stream_create_source(con->input, NULL);
+	g_source_set_callback(con->source, (GSourceFunc) read_cb, ctx, NULL);
+	g_source_attach(con->source, NULL);
+	g_source_unref(con->source);
+
+	cmumble_protocol_init(ctx);
 }
 
 int
@@ -49,7 +58,6 @@ cmumble_connection_init(struct cmumble_context *ctx,
 			const char *host, int port)
 {
 	struct cmumble_connection *con = &ctx->con;
-	GError *error = NULL;
 
 	con->sock_client = g_socket_client_new();
 	g_socket_client_set_tls(con->sock_client, TRUE);
@@ -61,30 +69,9 @@ cmumble_connection_init(struct cmumble_context *ctx,
 	g_socket_client_set_socket_type(con->sock_client,
 					G_SOCKET_TYPE_STREAM);
 
-	con->conn =
-		g_socket_client_connect_to_host(con->sock_client,
-						host, port, NULL, &error);
-	if (error) {
-		g_printerr("connect failed: %s\n", error->message);
-		return -1;
-	}
-
-	g_object_get(G_OBJECT(con->conn),
-		     "input-stream", &con->input,
-		     "output-stream", &con->output, NULL);
-
-	if (!G_IS_POLLABLE_INPUT_STREAM(con->input) ||
-	    !g_pollable_input_stream_can_poll(con->input)) {
-		g_printerr("Error: GSocketConnection is not pollable\n");
-		return 1;
-	}
-
-	con->source = g_pollable_input_stream_create_source(con->input, NULL);
-	g_source_set_callback(con->source, (GSourceFunc) read_cb, ctx, NULL);
-	g_source_attach(con->source, NULL);
-	g_source_unref(con->source);
-
-	setup_ping_timer(ctx);
+	g_socket_client_connect_to_host_async(con->sock_client,
+					      host, port, NULL,
+					      connection_ready, ctx);
 
 	return 0;
 }

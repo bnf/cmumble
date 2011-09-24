@@ -188,6 +188,47 @@ static const struct {
 	.SuggestConfig		= NULL,
 };
 
+static gboolean
+do_ping(struct cmumble_context *ctx)
+{
+	MumbleProto__Ping ping;
+	GTimeVal tv;
+
+	g_get_current_time(&tv);
+	mumble_proto__ping__init(&ping);
+	ping.timestamp = tv.tv_sec;
+	ping.resync = 1;
+	cmumble_send_msg(ctx, &ping.base);
+
+	return TRUE;
+}
+
+void
+cmumble_protocol_init(struct cmumble_context *ctx)
+{
+	MumbleProto__Version version;
+	MumbleProto__Authenticate authenticate;
+	GSource *source;
+
+	mumble_proto__version__init(&version);
+	version.version = 0x010203;
+	version.release = PACKAGE_STRING;
+	version.os = "Gentoo/Linux";
+	cmumble_send_msg(ctx, &version.base);
+
+	mumble_proto__authenticate__init(&authenticate);
+	authenticate.username = ctx->user_name;
+	authenticate.password = "";
+	authenticate.n_celt_versions = 1;
+	authenticate.celt_versions = (int32_t[]) { 0x8000000b };
+	cmumble_send_msg(ctx, &authenticate.base);
+
+	source = g_timeout_source_new_seconds(5);
+	g_source_set_callback(source, (GSourceFunc) do_ping, ctx, NULL);
+	g_source_attach(source, NULL);
+	g_source_unref(source);
+}
+
 int main(int argc, char **argv)
 {
 	char *host = "localhost";
@@ -201,6 +242,7 @@ int main(int argc, char **argv)
 
 	memset(&ctx, 0, sizeof(ctx));
 
+	ctx.user_name = argv[1];
 	ctx.users = NULL;
 
 	g_type_init();
@@ -210,25 +252,6 @@ int main(int argc, char **argv)
 	cmumble_commands_init(&ctx);
 	if (cmumble_connection_init(&ctx, host, port) < 0)
 		return 1;
-
-	{
-		MumbleProto__Version version;
-		mumble_proto__version__init(&version);
-		version.version = 0x010203;
-		version.release = PACKAGE_STRING;
-		version.os = "Gentoo/Linux";
-		cmumble_send_msg(&ctx, &version.base);
-	}
-
-	{
-		MumbleProto__Authenticate authenticate;
-		mumble_proto__authenticate__init(&authenticate);
-		authenticate.username = argv[1];
-		authenticate.password = "";
-		authenticate.n_celt_versions = 1;
-		authenticate.celt_versions = (int32_t[]) { 0x8000000b };
-		cmumble_send_msg(&ctx, &authenticate.base);
-	}
 
 	gst_init(&argc, &argv);
 

@@ -26,6 +26,12 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	MumbleProto__UDPTunnel tunnel;
 	static int seq = 0;
 
+	/* FIXME: Make this more generic/disable pulling
+	 * the pipeline completely if not connected?
+	 */
+	if (ctx->con.conn == NULL)
+		return GST_FLOW_OK;
+
 	buf = gst_app_sink_pull_buffer(ctx->audio.sink);
 
 	if (++seq <= 2) {

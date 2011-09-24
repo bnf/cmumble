@@ -26,6 +26,8 @@ struct cmumble_context {
 	uint32_t session;
 	gboolean authenticated;
 
+	char *user_name;
+
 	int64_t sequence;
 
 	GList *users;
@@ -46,5 +48,8 @@ enum udp_message_type {
 	udp_voice_speex,
 	udp_voice_celt_beta
 };
+
+void
+cmumble_protocol_init(struct cmumble_context *ctx);
 
 #endif
