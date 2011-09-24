@@ -124,13 +124,13 @@ recv_codec_version(MumbleProto__CodecVersion *codec, struct cmumble_context *ctx
 		codec->alpha, codec->beta, codec->prefer_alpha);
 }
 
-
 static void
 recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble_context *ctx)
 {
 	struct cmumble_user *user = NULL;
 
-	if ((user = find_user(ctx, remove->session))) {
+	user = find_user(ctx, remove->session);
+	if (user) {
 		ctx->users = g_list_remove(ctx->users, user);
 		g_free(user->name);
 		/* FIXME: destroy playback pipeline */
@@ -143,7 +143,8 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 {
 	struct cmumble_user *user = NULL;
 
-	if ((user = find_user(ctx, state->session))) {
+	user = find_user(ctx, state->session);
+	if (user) {
 		/* update */
 		return;
 	}
