@@ -16,7 +16,7 @@ list_users(struct cmumble_context *ctx)
 	for (l = ctx->users; l; l = l->next) {
 		user = l->data;
 
-		g_print("%4d: %s\n", user->user_id, user->name);
+		g_print("%4d: %s\n", user->id, user->name);
 	}
 }
 

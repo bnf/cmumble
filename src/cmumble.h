@@ -37,7 +37,7 @@ struct cmumble_context {
 struct cmumble_user {
 	uint32_t session;
 	char *name;
-	uint32_t user_id;
+	uint32_t id;
 
 	GstElement *pipeline;
 	GstAppSrc *src;

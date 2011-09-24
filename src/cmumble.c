@@ -6,36 +6,7 @@
 #include "cmumble.h"
 #include "io.h"
 #include "connection.h"
-
-static struct cmumble_user *
-find_user(struct cmumble_context *ctx, uint32_t session)
-{
-	struct cmumble_user *user = NULL;
-	GList *l;
-
-	for (l = ctx->users; l; l = l->next)
-		if (((struct cmumble_user *) l->data)->session == session) {
-			user = l->data;
-			break;
-		}
-
-	return user;
-}
-
-static struct cmumble_channel *
-find_channel(struct cmumble_context *ctx, uint32_t id)
-{
-	struct cmumble_channel *channel = NULL;
-	GList *l;
-
-	for (l = ctx->channels; l; l = l->next)
-		if (((struct cmumble_channel *) l->data)->id == id) {
-			channel = l->data;
-			break;
-		}
-
-	return channel;
-}
+#include "util.h"
 
 static void
 recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
@@ -185,7 +156,7 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 
 	user->session = state->session;
 	user->name = g_strdup(state->name);
-	user->user_id = state->user_id;
+	user->id = state->user_id;
 
 
 	cmumble_audio_create_playback_pipeline(ctx, user);
