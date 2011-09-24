@@ -46,7 +46,7 @@ help(struct cmumble_context *ctx)
 }
 
 static const struct cmumble_command commands[] = {
-	{ "ls", list_users, "list users" },
+	{ "lu", list_users, "list users" },
 	{ "clear", clear, "clear screen" },
 	{ "help", help, "show this help" },
 	{ "quit", quit, "quit " PACKAGE },
