@@ -43,7 +43,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 		return GST_FLOW_ERROR;
 	}
 
-	data[pos++] = (udp_voice_celt_alpha) | (0 << 4);
+	data[pos++] = (udp_voice_celt_alpha << 5) | (0);
 
 	encode_varint(&data[pos], &write, ++ctx->sequence, 1024-pos);
 	pos += write;
