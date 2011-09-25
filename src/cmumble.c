@@ -268,6 +268,7 @@ int main(int argc, char **argv)
 
 	context = g_option_context_new ("command line mumble client");
 	g_option_context_add_main_entries (context, entries, "cmumble");
+	g_option_context_add_group(context, gst_init_get_option_group());
 
 	if (!g_option_context_parse (context, &argc, &argv, &error)) {
 		g_print("option parsing failed: %s\n", error->message);
