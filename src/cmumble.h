@@ -60,6 +60,14 @@ enum udp_message_type {
 	udp_voice_celt_beta
 };
 
+enum udp_message_target {
+	udp_normal_talking = 0,
+	udp_whisper_to_channel = 1,
+	udp_direct_whisper_min = 2,
+	udp_direct_whisper_max = 30,
+	udp_server_loopback = 31
+};
+
 void
 cmumble_protocol_init(struct cmumble_context *ctx);
 
