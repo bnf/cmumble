@@ -62,6 +62,19 @@ print_preserve_prompt(const gchar *string)
 	}
 }
 
+static const char *
+skip_whitespace(const char *text)
+{
+	int i;
+	
+	for (i = 0; text[i] != '\0'; ++i) {
+		if (text[i] != ' ')
+			return &text[i];
+	}
+
+	return &text[i];
+}
+
 static void
 process_line(char *line)
 {
@@ -81,10 +94,17 @@ process_line(char *line)
 		return;
 	}
 
-	cmd = cmumble_command_complete(line);
+	cmd = skip_whitespace(line);
+	cmd = cmumble_command_complete(cmd);
 
 	for (i = 0; ctx->commands[i].name; ++i) {
-		if (strcmp(cmd, ctx->commands[i].name) == 0) {
+		if (strncmp(cmd, ctx->commands[i].name,
+			    strlen(ctx->commands[i].name)) == 0) {
+
+			if (strlen(cmd) > strlen(ctx->commands[i].name) && 
+				   cmd[strlen(ctx->commands[i].name)] != ' ')
+			    continue;
+
 			ctx->commands[i].callback(ctx);
 			break;
 		}
