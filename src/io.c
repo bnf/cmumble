@@ -66,6 +66,7 @@ static void
 process_line(char *line)
 {
 	struct cmumble_context *ctx = global_rl_user_data;
+	const char *cmd;
 	int i;
 
 	g_assert(global_rl_user_data);
@@ -80,8 +81,10 @@ process_line(char *line)
 		return;
 	}
 
+	cmd = cmumble_command_complete(line);
+
 	for (i = 0; ctx->commands[i].name; ++i) {
-		if (strcmp(line, ctx->commands[i].name) == 0) {
+		if (strcmp(cmd, ctx->commands[i].name) == 0) {
 			ctx->commands[i].callback(ctx);
 			break;
 		}

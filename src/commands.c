@@ -3,6 +3,7 @@
 #include "cmumble.h"
 
 #include <glib.h>
+#include <string.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -66,6 +67,24 @@ static const struct cmumble_command commands[] = {
 	{ "quit", quit, "quit " PACKAGE },
 	{ NULL, NULL , NULL}
 };
+
+const char *
+cmumble_command_complete(const char *text)
+{
+	int i = 0;
+	int found_index = -1;
+
+	do {
+		if (strncmp(commands[i].name, text, strlen(text)) == 0) {
+			/* Found at least two matches, so do not complete. */
+			if (found_index >= 0)
+				return text;
+			found_index = i;
+		}
+	} while (commands[++i].name);
+
+	return found_index >= 0 ? commands[found_index].name : text;
+}
 
 void
 cmumble_commands_init(struct cmumble_context *ctx)
