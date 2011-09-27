@@ -86,8 +86,30 @@ cmumble_command_complete(const char *text)
 	return found_index >= 0 ? commands[found_index].name : text;
 }
 
+static char *
+complete(const char *in, int n)
+{
+	static int index = 0, len;
+	const char *name;
+
+	if (n == 0) {
+		index = 0;
+		len = strlen(in);
+	}
+
+	while (commands[index].name) {
+		name = commands[index++].name;
+		if (strncmp(name, in, len) == 0)
+			return g_strdup(name);
+	}
+	
+	return NULL;
+}
+
 void
 cmumble_commands_init(struct cmumble_context *ctx)
 {
 	ctx->commands = commands;
+
+	rl_completion_entry_function = complete;
 }
