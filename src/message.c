@@ -90,7 +90,15 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 	if (ret <= 0) {
 		if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
 			return 0;
-		g_printerr("read failed: %ld\n", ret);
+
+		if (g_error_matches(error, G_TLS_ERROR, G_TLS_ERROR_EOF)) {
+			g_print("%s\n", error->message);
+			g_main_loop_quit(ctx->loop);
+			return 0;
+		}
+
+		g_printerr("read failed: %ld: %d %s\n", ret, error->code, error->message);
+
 		return 0;
 	}
 
