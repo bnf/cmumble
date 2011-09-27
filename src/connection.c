@@ -79,15 +79,19 @@ cmumble_connection_init(struct cmumble_context *ctx,
 int
 cmumble_connection_fini(struct cmumble_context *ctx)
 {
-	g_source_remove(g_source_get_id(ctx->con.source));
-	g_source_unref(ctx->con.source);
+	if (ctx->con.source) {
+		g_source_remove(g_source_get_id(ctx->con.source));
+		g_source_unref(ctx->con.source);
+	}
 
-	g_object_unref(G_OBJECT(ctx->con.input));
-	g_object_unref(G_OBJECT(ctx->con.output));
-
-	g_io_stream_close(G_IO_STREAM(ctx->con.conn), NULL, NULL);
-	g_object_unref(G_OBJECT(ctx->con.conn));
-	g_object_unref(G_OBJECT(ctx->con.sock_client));
+	if (ctx->con.conn) {
+		g_object_unref(G_OBJECT(ctx->con.input));
+		g_object_unref(G_OBJECT(ctx->con.output));
+		g_io_stream_close(G_IO_STREAM(ctx->con.conn), NULL, NULL);
+		g_object_unref(G_OBJECT(ctx->con.conn));
+	}
+	if (ctx->con.sock_client)
+		g_object_unref(G_OBJECT(ctx->con.sock_client));
 
 	return 0;
 }
