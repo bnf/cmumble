@@ -13,6 +13,6 @@ void
 cmumble_commands_init(struct cmumble_context *ctx);
 
 const char *
-cmumble_command_complete(const char *text);
+cmumble_command_expand_shortcut(const char *text);
 
 #endif /* _COMMANDS_H_ */

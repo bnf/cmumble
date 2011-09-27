@@ -95,7 +95,7 @@ process_line(char *line)
 	}
 
 	cmd = skip_whitespace(line);
-	cmd = cmumble_command_complete(cmd);
+	cmd = cmumble_command_expand_shortcut(cmd);
 
 	for (i = 0; ctx->commands[i].name; ++i) {
 		if (strncmp(cmd, ctx->commands[i].name,

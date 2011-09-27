@@ -69,7 +69,7 @@ static const struct cmumble_command commands[] = {
 };
 
 const char *
-cmumble_command_complete(const char *text)
+cmumble_command_expand_shortcut(const char *text)
 {
 	int i = 0;
 	int found_index = -1;
