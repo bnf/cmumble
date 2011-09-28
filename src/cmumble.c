@@ -25,7 +25,8 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
 
 	user = find_user(ctx, session);
 	if (user == NULL) {
-		g_printerr("received audio packet from unknown user, dropping.\n");
+		g_printerr("received audio packet from unknown user, "
+			   "dropping.\n");
 		return;
 	}
 
@@ -52,7 +53,8 @@ recv_version(MumbleProto__Version *version, struct cmumble_context *ctx)
 }
 
 static void
-recv_channel_state(MumbleProto__ChannelState *state, struct cmumble_context *ctx)
+recv_channel_state(MumbleProto__ChannelState *state,
+		   struct cmumble_context *ctx)
 {
 	struct cmumble_channel *channel;
 
@@ -118,7 +120,8 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble_context *ctx)
 }
 
 static void
-recv_codec_version(MumbleProto__CodecVersion *codec, struct cmumble_context *ctx)
+recv_codec_version(MumbleProto__CodecVersion *codec,
+		   struct cmumble_context *ctx)
 {
 	g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
 		codec->alpha, codec->beta, codec->prefer_alpha);
@@ -167,7 +170,8 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 
 
 static const struct {
-#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, struct cmumble_context *);
+#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
+				   struct cmumble_context *);
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 } callbacks = {
