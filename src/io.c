@@ -62,8 +62,8 @@ print_preserve_prompt(const gchar *string)
 	}
 }
 
-static const char *
-skip_whitespace(const char *text)
+static char *
+skip_whitespace(char *text)
 {
 	int i;
 	
@@ -75,14 +75,54 @@ skip_whitespace(const char *text)
 	return &text[i];
 }
 
+static char *
+skip_non_whitespace(char *text)
+{
+	int i;
+	
+	for (i = 0; text[i] != '\0'; ++i) {
+		if (text[i] == ' ')
+			return &text[i];
+	}
+
+	return &text[i];
+}
+
+static int
+command_split(char *cmd, char ***argv)
+{
+	static char *av[16];
+	int i;
+
+	for (i = 0; i < 15; ++i) {
+		cmd = skip_whitespace(cmd);
+		av[i] = cmd;
+		cmd = skip_non_whitespace(cmd);
+		if (cmd[0] == '\0') {
+			++i;
+			break;
+		} else {
+			cmd[0] = '\0';
+			cmd++;
+		}
+	}
+	av[i] = NULL;
+	*argv = av;
+
+	return i;
+}
+
 static void
 process_line(char *line)
 {
 	struct cmumble_context *ctx = global_rl_user_data;
-	const char *cmd;
 	int i;
+	int argc;
+	char **argv;
+	const char *cmd;
 
 	g_assert(global_rl_user_data);
+
 
 	rl_reset_line_state();
 
@@ -93,28 +133,28 @@ process_line(char *line)
 		g_main_loop_quit(ctx->loop);
 		return;
 	}
+	line = g_strdup(line);
 
-	cmd = skip_whitespace(line);
-	cmd = cmumble_command_expand_shortcut(cmd);
+	if (strlen(line))
+		add_history(line);
 
+	argc = command_split(line, &argv);
+	if (argc == 0)
+		goto out;
+
+	cmd = cmumble_command_expand_shortcut(argv[0]);
 	for (i = 0; ctx->commands[i].name; ++i) {
-		if (strncmp(cmd, ctx->commands[i].name,
-			    strlen(ctx->commands[i].name)) == 0) {
-
-			if (strlen(cmd) > strlen(ctx->commands[i].name) && 
-				   cmd[strlen(ctx->commands[i].name)] != ' ')
-			    continue;
-
-			ctx->commands[i].callback(ctx);
+		if (strlen(cmd) == strlen(ctx->commands[i].name) &&
+		    strcmp(cmd, ctx->commands[i].name) == 0) {
+			ctx->commands[i].callback(ctx, argc, argv);
 			break;
 		}
 	}
 
 	if (ctx->commands[i].name == NULL)
 		g_print("Unknown command: %s\n", line);
-
-	if (strlen(line))
-		add_history(line);
+out:
+	free(line);
 }
 
 int

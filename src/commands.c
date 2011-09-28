@@ -9,7 +9,8 @@
 #include <readline/history.h>
 
 static void
-list_users(struct cmumble_context *ctx)
+list_users(struct cmumble_context *ctx,
+	   int argc, char **argv)
 {
 	struct cmumble_user *user = NULL;
 	GList *l;
@@ -22,7 +23,8 @@ list_users(struct cmumble_context *ctx)
 }
 
 static void
-list_channels(struct cmumble_context *ctx)
+list_channels(struct cmumble_context *ctx,
+	      int argc, char **argv)
 {
 	struct cmumble_channel *channel = NULL;
 	GList *l;
@@ -35,14 +37,16 @@ list_channels(struct cmumble_context *ctx)
 }
 
 static void
-quit(struct cmumble_context *ctx)
+quit(struct cmumble_context *ctx,
+     int argc, char **argv)
 {
 	rl_already_prompted = 1;
 	g_main_loop_quit(ctx->loop);
 }
 
 static void
-clear(struct cmumble_context *ctx)
+clear(struct cmumble_context *ctx,
+      int argc, char **argv)
 {
 	rl_clear_screen(0,0);
 	rl_reset_line_state();
@@ -50,7 +54,8 @@ clear(struct cmumble_context *ctx)
 }
 
 static void
-help(struct cmumble_context *ctx)
+help(struct cmumble_context *ctx,
+     int argc, char **argv)
 {
 	int i;
 
