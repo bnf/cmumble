@@ -88,6 +88,7 @@ static void
 recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble_context *ctx)
 {
 	ctx->session = sync->session;
+	ctx->user = find_user(ctx, ctx->session);
 
 	if (sync->welcome_text)
 		g_print("Welcome Message: %s\n", sync->welcome_text);
@@ -164,6 +165,9 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 	user->name = g_strdup(state->name);
 	user->id = state->user_id;
 	user->channel = find_channel(ctx, state->channel_id);
+
+	if (ctx->session == user->session)
+		ctx->user = user;
 
 	cmumble_audio_create_playback_pipeline(ctx, user);
 	g_print("receive user: %s\n", user->name);

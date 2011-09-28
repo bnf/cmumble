@@ -32,6 +32,8 @@ struct cmumble_context {
 
 	GList *users;
 	GList *channels;
+
+	struct cmumble_user *user;
 };
 
 struct cmumble_user {
