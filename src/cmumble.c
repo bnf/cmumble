@@ -174,6 +174,16 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 	ctx->users = g_list_prepend(ctx->users, user);
 }
 
+static void
+recv_text_message(MumbleProto__TextMessage *text, struct cmumble_context *ctx)
+{
+	struct cmumble_user *user;
+
+	user = find_user(ctx, text->actor);
+	if (user != NULL)
+		g_print("%s> %s\n", user->name, text->message);
+}
+
 static const struct {
 #define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
 				   struct cmumble_context *);
@@ -191,7 +201,7 @@ static const struct {
 	.UserRemove		= recv_user_remove,
 	.UserState		= recv_user_state,
 	.BanList		= NULL,
-	.TextMessage		= NULL,
+	.TextMessage		= recv_text_message,
 	.PermissionDenied	= NULL,
 	.ACL			= NULL,
 	.QueryUsers		= NULL,
