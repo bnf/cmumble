@@ -163,7 +163,7 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 	user->session = state->session;
 	user->name = g_strdup(state->name);
 	user->id = state->user_id;
-
+	user->channel = find_channel(ctx, state->channel_id);
 
 	cmumble_audio_create_playback_pipeline(ctx, user);
 	g_print("receive user: %s\n", user->name);

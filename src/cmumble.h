@@ -38,6 +38,7 @@ struct cmumble_user {
 	uint32_t session;
 	char *name;
 	uint32_t id;
+	struct cmumble_channel *channel;
 
 	GstElement *pipeline;
 	GstAppSrc *src;
