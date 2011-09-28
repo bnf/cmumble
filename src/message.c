@@ -97,7 +97,9 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 			return 0;
 		}
 
-		g_printerr("read failed: %ld: %d %s\n", ret, error->code, error->message);
+		g_printerr("read failed: %ld: %d %s\n", ret,
+			   error ? error->code : -1,
+			   error ? error->message: "unknown");
 
 		return 0;
 	}
