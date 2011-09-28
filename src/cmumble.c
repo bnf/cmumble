@@ -89,6 +89,8 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble_context *ctx)
 {
 	ctx->session = sync->session;
 
+	if (sync->welcome_text)
+		g_print("Welcome Message: %s\n", sync->welcome_text);
 	g_print("got session: %d\n", ctx->session);
 }
 
@@ -167,7 +169,6 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 	g_print("receive user: %s\n", user->name);
 	ctx->users = g_list_prepend(ctx->users, user);
 }
-
 
 static const struct {
 #define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
