@@ -5,8 +5,7 @@ struct cmumble_context;
 
 struct cmumble_command {
 	const char *name;
-	void (*callback)(struct cmumble_context *,
-			 int argc, const char *argv);
+	void (*callback)(struct cmumble_context *);
 	const char *description;
 };
 

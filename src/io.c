@@ -105,7 +105,7 @@ process_line(char *line)
 				   cmd[strlen(ctx->commands[i].name)] != ' ')
 			    continue;
 
-			ctx->commands[i].callback(ctx, 0, NULL);
+			ctx->commands[i].callback(ctx);
 			break;
 		}
 	}

@@ -1,6 +1,5 @@
 #include "../config.h"
 #include "commands.h"
-#include "util.h"
 #include "cmumble.h"
 
 #include <glib.h>
@@ -10,8 +9,7 @@
 #include <readline/history.h>
 
 static void
-list_users(struct cmumble_context *ctx,
-	   int argc, const char *argv)
+list_users(struct cmumble_context *ctx)
 {
 	struct cmumble_user *user = NULL;
 	GList *l;
@@ -24,8 +22,7 @@ list_users(struct cmumble_context *ctx,
 }
 
 static void
-list_channels(struct cmumble_context *ctx,
-	      int argc, const char *argv)
+list_channels(struct cmumble_context *ctx)
 {
 	struct cmumble_channel *channel = NULL;
 	GList *l;
@@ -38,16 +35,14 @@ list_channels(struct cmumble_context *ctx,
 }
 
 static void
-quit(struct cmumble_context *ctx,
-     int argc, const char *argv)
+quit(struct cmumble_context *ctx)
 {
 	rl_already_prompted = 1;
 	g_main_loop_quit(ctx->loop);
 }
 
 static void
-clear(struct cmumble_context *ctx,
-      int argc, const char *argv)
+clear(struct cmumble_context *ctx)
 {
 	rl_clear_screen(0,0);
 	rl_reset_line_state();
@@ -55,8 +50,7 @@ clear(struct cmumble_context *ctx,
 }
 
 static void
-help(struct cmumble_context *ctx,
-     int argc, const char *argv)
+help(struct cmumble_context *ctx)
 {
 	int i;
 
@@ -65,27 +59,12 @@ help(struct cmumble_context *ctx,
 			ctx->commands[i].name, ctx->commands[i].description);
 }
 
-static void
-msg(struct cmumble_context *ctx,
-    int argc, const char *argv)
-{
-}
-
-static void
-test(struct cmumble_context *ctx,
-     int argc, const char *argv)
-{
-	g_print("find user 1: %p\n", find_user(ctx, 1));
-}
-
 static const struct cmumble_command commands[] = {
 	{ "lu", list_users, "list users" },
 	{ "lc", list_channels, "list channels" },
 	{ "clear", clear, "clear screen" },
-	{ "msg", msg, "Send broadcast message" },
 	{ "help", help, "show this help" },
 	{ "quit", quit, "quit " PACKAGE },
-	{ "test", test, "test" },
 	{ NULL, NULL , NULL}
 };
 
