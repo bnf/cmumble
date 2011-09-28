@@ -64,11 +64,42 @@ help(struct cmumble_context *ctx,
 			ctx->commands[i].name, ctx->commands[i].description);
 }
 
+static void
+msg(struct cmumble_context *ctx,
+    int argc, char **argv)
+{
+	MumbleProto__TextMessage message;
+
+	mumble_proto__text_message__init(&message);
+	message.actor = ctx->session;
+
+	if (argc < 2) {
+		g_print("usage: msg message\n");
+		return;
+	}
+
+	message.message = argv[argc-1];
+
+	/* FIXME: cache this in general somehow? */
+	if (!ctx->user || !ctx->user->channel) {
+		g_printerr("No information about current CHannel available\n");
+		return;
+	}
+
+	message.n_channel_id = 1;
+	message.channel_id = (uint32_t[]) { ctx->user->channel->id };
+	message.n_session = 0;
+	message.n_tree_id = 0;
+
+	cmumble_send_msg(ctx, &message.base);
+}
+
 static const struct cmumble_command commands[] = {
 	{ "lu", list_users, "list users" },
 	{ "lc", list_channels, "list channels" },
 	{ "clear", clear, "clear screen" },
 	{ "help", help, "show this help" },
+	{ "msg", msg, "send a text message" },
 	{ "quit", quit, "quit " PACKAGE },
 	{ NULL, NULL , NULL}
 };
