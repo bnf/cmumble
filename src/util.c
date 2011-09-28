@@ -8,7 +8,7 @@ cmumble_find_by_id(GList *list, gsize member_offset, guint id)
 	GList *l;
 
 	for (l = list; l; l = l->next) {
-		if (G_STRUCT_MEMBER(uint32_t, l, member_offset) == id) {
+		if (G_STRUCT_MEMBER(uint32_t, l->data, member_offset) == id) {
 			el = l->data;
 			break;
 		}
