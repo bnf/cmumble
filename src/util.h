@@ -8,11 +8,11 @@ gpointer
 cmumble_find_by_id(GList *list, gsize member_offset, guint id);
 
 static inline struct cmumble_user *
-find_user(struct cmumble_context *ctx, uint32_t session)
+find_user(struct cmumble_context *ctx, uint32_t session_id)
 {
 	return cmumble_find_by_id(ctx->users,
 				  G_STRUCT_OFFSET(struct cmumble_user, session),
-				  session);
+				  session_id);
 }
 
 static inline struct cmumble_channel *
