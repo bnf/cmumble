@@ -11,7 +11,7 @@ static inline struct cmumble_user *
 find_user(struct cmumble_context *ctx, uint32_t session)
 {
 	return cmumble_find_by_id(ctx->users,
-				  G_STRUCT_OFFSET(struct cmumble_user, id),
+				  G_STRUCT_OFFSET(struct cmumble_user, session),
 				  session);
 }
 
