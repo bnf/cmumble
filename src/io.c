@@ -75,17 +75,42 @@ skip_whitespace(char *text)
 	return &text[i];
 }
 
+static gboolean
+is_escaped(char *text, int index, char escape)
+{
+	if (index <= 0)
+		return FALSE;
+
+	if (text[index-1] == escape)
+		return !is_escaped(text, index-1, escape);
+
+	return FALSE;
+}
+
 static char *
-skip_non_whitespace(char *text)
+skip_non_whitespace(char *text, char delimiter)
 {
 	int i;
 	
 	for (i = 0; text[i] != '\0'; ++i) {
-		if (text[i] == ' ')
+		if (text[i] == delimiter && !is_escaped(text, i, '\\'))
 			return &text[i];
 	}
 
 	return &text[i];
+}
+
+static char *
+skip_delimiter(char *text, char *delimiter)
+{
+	*delimiter = ' ';
+
+	if (text[0] == '"' || text[0] == '\'') {
+		*delimiter = text[0];
+		text = &text[1];
+	}
+
+	return text;
 }
 
 static int
@@ -93,11 +118,15 @@ command_split(char *cmd, char ***argv)
 {
 	static char *av[16];
 	int i;
+	char delimiter;
 
 	for (i = 0; i < 15; ++i) {
 		cmd = skip_whitespace(cmd);
+		if (strlen(cmd) == 0)
+			break;
+		cmd = skip_delimiter(cmd, &delimiter);
 		av[i] = cmd;
-		cmd = skip_non_whitespace(cmd);
+		cmd = skip_non_whitespace(cmd, delimiter);
 		if (cmd[0] == '\0') {
 			++i;
 			break;
@@ -122,7 +151,6 @@ process_line(char *line)
 	const char *cmd;
 
 	g_assert(global_rl_user_data);
-
 
 	rl_reset_line_state();
 
