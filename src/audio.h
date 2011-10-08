@@ -15,7 +15,7 @@ struct cmumble_audio {
 	GstElement *record_pipeline;
 	GstAppSink *sink;
 
-	uint8_t celt_header_packet[sizeof(CELTHeader)];
+	guint8 celt_header_packet[sizeof(CELTHeader)];
 	CELTHeader celt_header;
 	CELTMode *celt_mode;
 };
