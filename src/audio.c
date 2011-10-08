@@ -8,7 +8,7 @@
 
 void
 cmumble_audio_push(struct cmumble_context *ctx, struct cmumble_user *user,
-		   const uint8_t *data, gsize size)
+		   const guint8 *data, gsize size)
 {
 	GstBuffer *gstbuf;
 
