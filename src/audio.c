@@ -45,7 +45,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 
 	data[pos++] = (udp_voice_celt_alpha << 5) | (udp_normal_talking);
 
-	encode_varint(&data[pos], &write, ++cm->sequence, 1024-pos);
+	encode_varint(&data[pos], &write, ++cm->sequence, sizeof(data)-pos);
 	pos += write;
 
 	data[pos++] = 0x00 /*: 0x80 */ | (GST_BUFFER_SIZE(buf) & 0x7F);
