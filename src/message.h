@@ -10,12 +10,12 @@ enum cmumble_message {
 #undef MUMBLE_MSG
 };
 
-struct cmumble_context;
+struct cmumlbe;
 
 void
-cmumble_send_msg(struct cmumble_context *ctx, ProtobufCMessage *msg);
+cmumble_send_msg(struct cmumlbe *cm, ProtobufCMessage *msg);
 
 int
-cmumble_recv_msg(struct cmumble_context *ctx);
+cmumble_recv_msg(struct cmumlbe *cm);
 
 #endif /* _MESSAGE_H_ */

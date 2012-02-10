@@ -8,11 +8,11 @@ static gboolean
 read_cb(GObject *pollable_stream, gpointer data)
 {
 	GPollableInputStream *input = G_POLLABLE_INPUT_STREAM(pollable_stream);
-	struct cmumble_context *ctx = data;
+	struct cmumlbe *cm = data;
 	gint count;
 
 	do {
-		count = cmumble_recv_msg(ctx);
+		count = cmumble_recv_msg(cm);
 	} while (count && g_pollable_input_stream_is_readable(input));
 
 	return TRUE;
@@ -21,15 +21,15 @@ read_cb(GObject *pollable_stream, gpointer data)
 static void
 connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
-	struct cmumble_context *ctx = user_data;
-	struct cmumble_connection *con = &ctx->con;
+	struct cmumlbe *cm = user_data;
+	struct cmumble_connection *con = &cm->con;
 	GError *error = NULL;
 
 	con->conn = g_socket_client_connect_to_host_finish (con->sock_client,
 							    res, &error);
 	if (error) {
 		g_printerr("connect failed: %s\n", error->message);
-		g_main_loop_quit(ctx->loop);
+		g_main_loop_quit(cm->loop);
 		g_error_free(error);
 		return;
 	}
@@ -41,23 +41,23 @@ connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 	if (!G_IS_POLLABLE_INPUT_STREAM(con->input) ||
 	    !g_pollable_input_stream_can_poll(con->input)) {
 		g_printerr("Error: GSocketConnection is not pollable\n");
-		g_main_loop_quit(ctx->loop);
+		g_main_loop_quit(cm->loop);
 		return;
 	}
 
 	con->source = g_pollable_input_stream_create_source(con->input, NULL);
-	g_source_set_callback(con->source, (GSourceFunc) read_cb, ctx, NULL);
+	g_source_set_callback(con->source, (GSourceFunc) read_cb, cm, NULL);
 	g_source_attach(con->source, NULL);
 	g_source_unref(con->source);
 
-	cmumble_protocol_init(ctx);
+	cmumble_protocol_init(cm);
 }
 
 int
-cmumble_connection_init(struct cmumble_context *ctx,
+cmumble_connection_init(struct cmumlbe *cm,
 			const char *host, int port)
 {
-	struct cmumble_connection *con = &ctx->con;
+	struct cmumble_connection *con = &cm->con;
 
 	con->sock_client = g_socket_client_new();
 	g_socket_client_set_tls(con->sock_client, TRUE);
@@ -71,27 +71,27 @@ cmumble_connection_init(struct cmumble_context *ctx,
 
 	g_socket_client_connect_to_host_async(con->sock_client,
 					      host, port, NULL,
-					      connection_ready, ctx);
+					      connection_ready, cm);
 
 	return 0;
 }
 
 int
-cmumble_connection_fini(struct cmumble_context *ctx)
+cmumble_connection_fini(struct cmumlbe *cm)
 {
-	if (ctx->con.source) {
-		g_source_remove(g_source_get_id(ctx->con.source));
-		g_source_unref(ctx->con.source);
+	if (cm->con.source) {
+		g_source_remove(g_source_get_id(cm->con.source));
+		g_source_unref(cm->con.source);
 	}
 
-	if (ctx->con.conn) {
-		g_object_unref(G_OBJECT(ctx->con.input));
-		g_object_unref(G_OBJECT(ctx->con.output));
-		g_io_stream_close(G_IO_STREAM(ctx->con.conn), NULL, NULL);
-		g_object_unref(G_OBJECT(ctx->con.conn));
+	if (cm->con.conn) {
+		g_object_unref(G_OBJECT(cm->con.input));
+		g_object_unref(G_OBJECT(cm->con.output));
+		g_io_stream_close(G_IO_STREAM(cm->con.conn), NULL, NULL);
+		g_object_unref(G_OBJECT(cm->con.conn));
 	}
-	if (ctx->con.sock_client)
-		g_object_unref(G_OBJECT(ctx->con.sock_client));
+	if (cm->con.sock_client)
+		g_object_unref(G_OBJECT(cm->con.sock_client));
 
 	return 0;
 }

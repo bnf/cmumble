@@ -22,10 +22,10 @@ static gpointer global_rl_user_data = NULL;
 static gboolean
 read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
 {
-	struct cmumble_context *ctx = data;
+	struct cmumlbe *cm = data;
 
 	if (condition & G_IO_IN) {
-		global_rl_user_data = ctx;
+		global_rl_user_data = cm;
 		rl_callback_read_char();
 		global_rl_user_data = NULL;
 	}
@@ -144,7 +144,7 @@ command_split(char *cmd, char ***argv)
 static void
 process_line(char *line)
 {
-	struct cmumble_context *ctx = global_rl_user_data;
+	struct cmumlbe *cm = global_rl_user_data;
 	int i;
 	int argc;
 	char **argv;
@@ -158,7 +158,7 @@ process_line(char *line)
 		printf("quit");
 		rl_already_prompted = 1;
 		rl_crlf();
-		g_main_loop_quit(ctx->loop);
+		g_main_loop_quit(cm->loop);
 		return;
 	}
 	line = g_strdup(line);
@@ -171,36 +171,36 @@ process_line(char *line)
 		goto out;
 
 	cmd = cmumble_command_expand_shortcut(argv[0]);
-	for (i = 0; ctx->commands[i].name; ++i) {
-		if (strlen(cmd) == strlen(ctx->commands[i].name) &&
-		    strcmp(cmd, ctx->commands[i].name) == 0) {
-			ctx->commands[i].callback(ctx, argc, argv);
+	for (i = 0; cm->commands[i].name; ++i) {
+		if (strlen(cmd) == strlen(cm->commands[i].name) &&
+		    strcmp(cmd, cm->commands[i].name) == 0) {
+			cm->commands[i].callback(cm, argc, argv);
 			break;
 		}
 	}
 
-	if (ctx->commands[i].name == NULL)
+	if (cm->commands[i].name == NULL)
 		g_print("Unknown command: %s\n", line);
 out:
 	free(line);
 }
 
 int
-cmumble_io_init(struct cmumble_context *ctx)
+cmumble_io_init(struct cmumlbe *cm)
 {
 	struct termios term;
 
-	ctx->io.input_channel = g_io_channel_unix_new(STDIN_FILENO);
+	cm->io.input_channel = g_io_channel_unix_new(STDIN_FILENO);
 
-	g_io_add_watch(ctx->io.input_channel, G_IO_IN | G_IO_HUP,
-		       read_cb, ctx);
+	g_io_add_watch(cm->io.input_channel, G_IO_IN | G_IO_HUP,
+		       read_cb, cm);
 
 	if (tcgetattr(STDIN_FILENO, &term) < 0) {
 		g_printerr("tcgetattr failed");
 		return -1;
 	}
 
-	ctx->io.term = term;
+	cm->io.term = term;
 	term.c_lflag &= ~ICANON;
 	term.c_cc[VTIME] = 1;
 
@@ -217,12 +217,12 @@ cmumble_io_init(struct cmumble_context *ctx)
 }
 
 int
-cmumble_io_fini(struct cmumble_context *ctx)
+cmumble_io_fini(struct cmumlbe *cm)
 {
 	rl_callback_handler_remove();
-	g_io_channel_unref(ctx->io.input_channel);
+	g_io_channel_unref(cm->io.input_channel);
 
-	if (tcsetattr(STDIN_FILENO, TCSANOW, &ctx->io.term) < 0) {
+	if (tcsetattr(STDIN_FILENO, TCSANOW, &cm->io.term) < 0) {
 		g_printerr("tcsetattr failed");
 		return -1;
 	}

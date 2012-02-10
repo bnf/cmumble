@@ -9,13 +9,13 @@
 #include <readline/history.h>
 
 static void
-list_users(struct cmumble_context *ctx,
+list_users(struct cmumlbe *cm,
 	   int argc, char **argv)
 {
 	struct cmumble_user *user = NULL;
 	GList *l;
 
-	for (l = ctx->users; l; l = l->next) {
+	for (l = cm->users; l; l = l->next) {
 		user = l->data;
 
 		g_print("%4d: %s\n", user->session, user->name);
@@ -23,13 +23,13 @@ list_users(struct cmumble_context *ctx,
 }
 
 static void
-list_channels(struct cmumble_context *ctx,
+list_channels(struct cmumlbe *cm,
 	      int argc, char **argv)
 {
 	struct cmumble_channel *channel = NULL;
 	GList *l;
 
-	for (l = ctx->channels; l; l = l->next) {
+	for (l = cm->channels; l; l = l->next) {
 		channel = l->data;
 
 		g_print("%4d: %s\n", channel->id, channel->name);
@@ -37,15 +37,15 @@ list_channels(struct cmumble_context *ctx,
 }
 
 static void
-quit(struct cmumble_context *ctx,
+quit(struct cmumlbe *cm,
      int argc, char **argv)
 {
 	rl_already_prompted = 1;
-	g_main_loop_quit(ctx->loop);
+	g_main_loop_quit(cm->loop);
 }
 
 static void
-clear(struct cmumble_context *ctx,
+clear(struct cmumlbe *cm,
       int argc, char **argv)
 {
 	rl_clear_screen(0,0);
@@ -54,24 +54,24 @@ clear(struct cmumble_context *ctx,
 }
 
 static void
-help(struct cmumble_context *ctx,
+help(struct cmumlbe *cm,
      int argc, char **argv)
 {
 	int i;
 
-	for (i = 0; ctx->commands[i].name; ++i)
+	for (i = 0; cm->commands[i].name; ++i)
 		g_print("%s\t%s\n",
-			ctx->commands[i].name, ctx->commands[i].description);
+			cm->commands[i].name, cm->commands[i].description);
 }
 
 static void
-msg(struct cmumble_context *ctx,
+msg(struct cmumlbe *cm,
     int argc, char **argv)
 {
 	MumbleProto__TextMessage message;
 
 	mumble_proto__text_message__init(&message);
-	message.actor = ctx->session;
+	message.actor = cm->session;
 
 	if (argc < 2) {
 		g_print("usage: msg message\n");
@@ -81,17 +81,17 @@ msg(struct cmumble_context *ctx,
 	message.message = argv[argc-1];
 
 	/* FIXME: cache this in general somehow? */
-	if (!ctx->user || !ctx->user->channel) {
+	if (!cm->user || !cm->user->channel) {
 		g_printerr("No information about current CHannel available\n");
 		return;
 	}
 
 	message.n_channel_id = 1;
-	message.channel_id = (uint32_t[]) { ctx->user->channel->id };
+	message.channel_id = (uint32_t[]) { cm->user->channel->id };
 	message.n_session = 0;
 	message.n_tree_id = 0;
 
-	cmumble_send_msg(ctx, &message.base);
+	cmumble_send_msg(cm, &message.base);
 }
 
 static const struct cmumble_command commands[] = {
@@ -143,9 +143,9 @@ complete(const char *in, int n)
 }
 
 void
-cmumble_commands_init(struct cmumble_context *ctx)
+cmumble_commands_init(struct cmumlbe *cm)
 {
-	ctx->commands = commands;
+	cm->commands = commands;
 
 	rl_completion_entry_function = complete;
 }

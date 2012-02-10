@@ -39,7 +39,7 @@ get_preamble(uint8_t *buffer, int *type, int *len)
 }
 
 void
-cmumble_send_msg(struct cmumble_context *ctx, ProtobufCMessage *msg)
+cmumble_send_msg(struct cmumlbe *cm, ProtobufCMessage *msg)
 {
 	uint8_t pad[128];
 	uint8_t preamble[PREAMBLE_SIZE];
@@ -64,15 +64,15 @@ cmumble_send_msg(struct cmumble_context *ctx, ProtobufCMessage *msg)
 	add_preamble(preamble, type, buffer.len);
 
 	g_static_mutex_lock(&write_mutex);
-	g_output_stream_write(ctx->con.output, preamble, PREAMBLE_SIZE, NULL, NULL);
-	g_output_stream_write(ctx->con.output, buffer.data, buffer.len, NULL, NULL);
+	g_output_stream_write(cm->con.output, preamble, PREAMBLE_SIZE, NULL, NULL);
+	g_output_stream_write(cm->con.output, buffer.data, buffer.len, NULL, NULL);
 	g_static_mutex_unlock(&write_mutex);
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
 }
 
 int
-cmumble_recv_msg(struct cmumble_context *ctx)
+cmumble_recv_msg(struct cmumlbe *cm)
 {
 	uint8_t preamble[PREAMBLE_SIZE];
 	ProtobufCMessage *msg;
@@ -81,9 +81,9 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 	gssize ret;
 	GError *error = NULL;
 
-	g_assert(ctx->callbacks);
+	g_assert(cm->callbacks);
 
-	ret = g_pollable_input_stream_read_nonblocking(ctx->con.input,
+	ret = g_pollable_input_stream_read_nonblocking(cm->con.input,
 						       preamble, PREAMBLE_SIZE,
 						       NULL, &error);
 
@@ -93,7 +93,7 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 
 		if (g_error_matches(error, G_TLS_ERROR, G_TLS_ERROR_EOF)) {
 			g_print("%s\n", error->message);
-			g_main_loop_quit(ctx->loop);
+			g_main_loop_quit(cm->loop);
 			return 0;
 		}
 
@@ -119,9 +119,9 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 	data = g_malloc(len);
 	if (data == NULL) {
 		g_printerr("out of mem\n");
-		g_main_loop_quit (ctx->loop);
+		g_main_loop_quit (cm->loop);
 	}
-	ret = g_input_stream_read(G_INPUT_STREAM(ctx->con.input),
+	ret = g_input_stream_read(G_INPUT_STREAM(cm->con.input),
 				  data, len, NULL, NULL);
 
 	/* tunneled udp data - not a regular protobuf message
@@ -133,8 +133,8 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 		udptunnel.packet.len = len;
 		udptunnel.packet.data = (uint8_t *) data;
 
-		if (ctx->callbacks[UDPTunnel])
-			ctx->callbacks[UDPTunnel](&udptunnel.base, ctx);
+		if (cm->callbacks[UDPTunnel])
+			cm->callbacks[UDPTunnel](&udptunnel.base, cm);
 
 		g_free(data);
 		return 0;
@@ -148,8 +148,8 @@ cmumble_recv_msg(struct cmumble_context *ctx)
 	}
 
 	g_print("debug: received message: %s type:%d, len:%d\n", messages[type].name, type, len);
-	if (ctx->callbacks[type])
-		ctx->callbacks[type](msg, ctx);
+	if (cm->callbacks[type])
+		cm->callbacks[type](msg, cm);
 
 	protobuf_c_message_free_unpacked(msg, NULL);
 	g_free(data);

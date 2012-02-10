@@ -9,7 +9,7 @@
 #include "util.h"
 
 static void
-recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
+recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumlbe *cm)
 {
 	int64_t session, sequence;
 	uint32_t pos = 1, read = 0;
@@ -23,7 +23,7 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
 	sequence = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
 
-	user = find_user(ctx, session);
+	user = find_user(cm, session);
 	if (user == NULL) {
 		g_printerr("received audio packet from unknown user, "
 			   "dropping.\n");
@@ -38,7 +38,7 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
 		if (frame_len == 0 || frame_len > len-pos)
 			break;
 
-		cmumble_audio_push(ctx, user, &data[pos], frame_len);
+		cmumble_audio_push(cm, user, &data[pos], frame_len);
 
 		pos += frame_len;
 		sequence++;
@@ -46,7 +46,7 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble_context *ctx)
 }
 
 static void
-recv_version(MumbleProto__Version *version, struct cmumble_context *ctx)
+recv_version(MumbleProto__Version *version, struct cmumlbe *cm)
 {
 	g_print("version: 0x%x\n", version->version);
 	g_print("release: %s\n", version->release);
@@ -54,18 +54,18 @@ recv_version(MumbleProto__Version *version, struct cmumble_context *ctx)
 
 static void
 recv_channel_state(MumbleProto__ChannelState *state,
-		   struct cmumble_context *ctx)
+		   struct cmumlbe *cm)
 {
 	struct cmumble_channel *channel;
 
-	channel = find_channel(ctx, state->channel_id);
+	channel = find_channel(cm, state->channel_id);
 	if (channel == NULL) {
 		channel = g_slice_new0(struct cmumble_channel);
 		if (channel == NULL) {
 			g_printerr("Out of memory.\n");
 			exit(1);
 		}
-		ctx->channels = g_list_prepend(ctx->channels, channel);
+		cm->channels = g_list_prepend(cm->channels, channel);
 
 		if (channel->name)
 			g_free(channel->name);
@@ -85,18 +85,18 @@ recv_channel_state(MumbleProto__ChannelState *state,
 }
 
 static void
-recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble_context *ctx)
+recv_server_sync(MumbleProto__ServerSync *sync, struct cmumlbe *cm)
 {
-	ctx->session = sync->session;
-	ctx->user = find_user(ctx, ctx->session);
+	cm->session = sync->session;
+	cm->user = find_user(cm, cm->session);
 
 	if (sync->welcome_text)
 		g_print("Welcome Message: %s\n", sync->welcome_text);
-	g_print("got session: %d\n", ctx->session);
+	g_print("got session: %d\n", cm->session);
 }
 
 static void
-recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble_context *ctx)
+recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumlbe *cm)
 {
 #if 0
 	int i;
@@ -124,20 +124,20 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble_context *ctx)
 
 static void
 recv_codec_version(MumbleProto__CodecVersion *codec,
-		   struct cmumble_context *ctx)
+		   struct cmumlbe *cm)
 {
 	g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
 		codec->alpha, codec->beta, codec->prefer_alpha);
 }
 
 static void
-recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble_context *ctx)
+recv_user_remove(MumbleProto__UserRemove *remove, struct cmumlbe *cm)
 {
 	struct cmumble_user *user = NULL;
 
-	user = find_user(ctx, remove->session);
+	user = find_user(cm, remove->session);
 	if (user) {
-		ctx->users = g_list_remove(ctx->users, user);
+		cm->users = g_list_remove(cm->users, user);
 		g_free(user->name);
 		/* FIXME: destroy playback pipeline */
 		g_slice_free(struct cmumble_user, user);
@@ -145,11 +145,11 @@ recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble_context *ctx)
 }
 
 static void
-recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
+recv_user_state(MumbleProto__UserState *state, struct cmumlbe *cm)
 {
 	struct cmumble_user *user = NULL;
 
-	user = find_user(ctx, state->session);
+	user = find_user(cm, state->session);
 	if (user) {
 		/* update */
 		return;
@@ -164,29 +164,29 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble_context *ctx)
 	user->session = state->session;
 	user->name = g_strdup(state->name);
 	user->id = state->user_id;
-	user->channel = find_channel(ctx, state->channel_id);
+	user->channel = find_channel(cm, state->channel_id);
 
-	if (ctx->session == user->session)
-		ctx->user = user;
+	if (cm->session == user->session)
+		cm->user = user;
 
-	cmumble_audio_create_playback_pipeline(ctx, user);
+	cmumble_audio_create_playback_pipeline(cm, user);
 	g_print("receive user: %s\n", user->name);
-	ctx->users = g_list_prepend(ctx->users, user);
+	cm->users = g_list_prepend(cm->users, user);
 }
 
 static void
-recv_text_message(MumbleProto__TextMessage *text, struct cmumble_context *ctx)
+recv_text_message(MumbleProto__TextMessage *text, struct cmumlbe *cm)
 {
 	struct cmumble_user *user;
 
-	user = find_user(ctx, text->actor);
+	user = find_user(cm, text->actor);
 	if (user != NULL)
 		g_print("%s> %s\n", user->name, text->message);
 }
 
 static const struct {
 #define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
-				   struct cmumble_context *);
+				   struct cmumlbe *);
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 } callbacks = {
@@ -219,7 +219,7 @@ static const struct {
 };
 
 static gboolean
-do_ping(struct cmumble_context *ctx)
+do_ping(struct cmumlbe *cm)
 {
 	MumbleProto__Ping ping;
 	GTimeVal tv;
@@ -228,13 +228,13 @@ do_ping(struct cmumble_context *ctx)
 	mumble_proto__ping__init(&ping);
 	ping.timestamp = tv.tv_sec;
 	ping.resync = 1;
-	cmumble_send_msg(ctx, &ping.base);
+	cmumble_send_msg(cm, &ping.base);
 
 	return TRUE;
 }
 
 void
-cmumble_protocol_init(struct cmumble_context *ctx)
+cmumble_protocol_init(struct cmumlbe *cm)
 {
 	MumbleProto__Version version;
 	MumbleProto__Authenticate authenticate;
@@ -244,17 +244,17 @@ cmumble_protocol_init(struct cmumble_context *ctx)
 	version.version = 0x010203;
 	version.release = PACKAGE_STRING;
 	version.os = "Gentoo/Linux";
-	cmumble_send_msg(ctx, &version.base);
+	cmumble_send_msg(cm, &version.base);
 
 	mumble_proto__authenticate__init(&authenticate);
-	authenticate.username = ctx->user_name;
+	authenticate.username = cm->user_name;
 	authenticate.password = "";
 	authenticate.n_celt_versions = 1;
 	authenticate.celt_versions = (int32_t[]) { 0x8000000b };
-	cmumble_send_msg(ctx, &authenticate.base);
+	cmumble_send_msg(cm, &authenticate.base);
 
 	source = g_timeout_source_new_seconds(5);
-	g_source_set_callback(source, (GSourceFunc) do_ping, ctx, NULL);
+	g_source_set_callback(source, (GSourceFunc) do_ping, cm, NULL);
 	g_source_attach(source, NULL);
 	g_source_unref(source);
 }
@@ -281,7 +281,7 @@ static GOptionEntry entries[] = {
 
 int main(int argc, char **argv)
 {
-	struct cmumble_context ctx;
+	struct cmumlbe cm;
 	GError *error = NULL;
 	GOptionContext *context;
 
@@ -294,32 +294,32 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&ctx, 0, sizeof(ctx));
+	memset(&cm, 0, sizeof(cm));
 
-	ctx.user_name = user;
-	ctx.users = NULL;
+	cm.user_name = user;
+	cm.users = NULL;
 
 	g_type_init();
-	ctx.loop = g_main_loop_new(NULL, FALSE);
-	ctx.callbacks = (const callback_t *) &callbacks;
+	cm.loop = g_main_loop_new(NULL, FALSE);
+	cm.callbacks = (const callback_t *) &callbacks;
 
-	cmumble_commands_init(&ctx);
-	if (cmumble_connection_init(&ctx, host, port) < 0)
+	cmumble_commands_init(&cm);
+	if (cmumble_connection_init(&cm, host, port) < 0)
 		return 1;
 
 	gst_init(&argc, &argv);
 
-	if (cmumble_audio_init(&ctx) < 0)
+	if (cmumble_audio_init(&cm) < 0)
 		return 1;
-	cmumble_io_init(&ctx);
+	cmumble_io_init(&cm);
 
-	g_main_loop_run(ctx.loop);
+	g_main_loop_run(cm.loop);
 
-	g_main_loop_unref(ctx.loop);
+	g_main_loop_unref(cm.loop);
 
-	cmumble_io_fini(&ctx);
-	cmumble_audio_init(&ctx);
-	cmumble_connection_fini(&ctx);
+	cmumble_io_fini(&cm);
+	cmumble_audio_init(&cm);
+	cmumble_connection_fini(&cm);
 
 	return 0;
 }

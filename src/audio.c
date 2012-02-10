@@ -7,7 +7,7 @@
 #define CHANNELS 1
 
 void
-cmumble_audio_push(struct cmumble_context *ctx, struct cmumble_user *user,
+cmumble_audio_push(struct cmumlbe *cm, struct cmumble_user *user,
 		   const guint8 *data, gsize size)
 {
 	GstBuffer *gstbuf;
@@ -19,7 +19,7 @@ cmumble_audio_push(struct cmumble_context *ctx, struct cmumble_user *user,
 static GstFlowReturn
 pull_buffer(GstAppSink *sink, gpointer user_data)
 {
-	struct cmumble_context *ctx = user_data;
+	struct cmumlbe *cm = user_data;
 	GstBuffer *buf;
 	uint8_t data[1024];
 	uint32_t write = 0, pos = 0;
@@ -29,10 +29,10 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	/* FIXME: Make this more generic/disable pulling
 	 * the pipeline completely if not connected?
 	 */
-	if (ctx->con.conn == NULL)
+	if (cm->con.conn == NULL)
 		return GST_FLOW_OK;
 
-	buf = gst_app_sink_pull_buffer(ctx->audio.sink);
+	buf = gst_app_sink_pull_buffer(cm->audio.sink);
 
 	if (++seq <= 2) {
 		gst_buffer_unref(buf);
@@ -45,7 +45,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 
 	data[pos++] = (udp_voice_celt_alpha << 5) | (udp_normal_talking);
 
-	encode_varint(&data[pos], &write, ++ctx->sequence, 1024-pos);
+	encode_varint(&data[pos], &write, ++cm->sequence, 1024-pos);
 	pos += write;
 
 	data[pos++] = 0x00 /*: 0x80 */ | (GST_BUFFER_SIZE(buf) & 0x7F);
@@ -57,13 +57,13 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	mumble_proto__udptunnel__init(&tunnel);
 	tunnel.packet.data = data;
 	tunnel.packet.len = pos;
-	cmumble_send_msg(ctx, &tunnel.base);
+	cmumble_send_msg(cm, &tunnel.base);
 
 	return GST_FLOW_OK;
 }
 
 static int
-setup_recording_gst_pipeline(struct cmumble_context *ctx)
+setup_recording_gst_pipeline(struct cmumlbe *cm)
 {
 	GstElement *pipeline, *cutter, *sink;
 	GError *error = NULL;
@@ -79,28 +79,28 @@ setup_recording_gst_pipeline(struct cmumble_context *ctx)
 		return -1;
 	}
 	sink = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-	ctx->audio.sink = GST_APP_SINK(sink);
-	ctx->audio.record_pipeline = pipeline;
+	cm->audio.sink = GST_APP_SINK(sink);
+	cm->audio.record_pipeline = pipeline;
 
 	cutter = gst_bin_get_by_name(GST_BIN(pipeline), "cutter");
 	g_object_set(G_OBJECT(cutter),
 		     "threshold_dB", -45.0, "leaky", TRUE, NULL);
 
-	gst_app_sink_set_emit_signals(ctx->audio.sink, TRUE);
-	gst_app_sink_set_drop(ctx->audio.sink, FALSE);;
-	g_signal_connect(sink, "new-buffer", G_CALLBACK(pull_buffer), ctx);
+	gst_app_sink_set_emit_signals(cm->audio.sink, TRUE);
+	gst_app_sink_set_drop(cm->audio.sink, FALSE);;
+	g_signal_connect(sink, "new-buffer", G_CALLBACK(pull_buffer), cm);
 
 	caps = gst_caps_new_simple("audio/x-celt",
 				   "rate", G_TYPE_INT, SAMPLERATE,
 				   "channels", G_TYPE_INT, 1,
 				   "frame-size", G_TYPE_INT, SAMPLERATE/100,
 				   NULL);
-	gst_app_sink_set_caps(ctx->audio.sink, caps);
+	gst_app_sink_set_caps(cm->audio.sink, caps);
 	gst_caps_unref(caps);
 
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
-	ctx->sequence = 0;
+	cm->sequence = 0;
 
 	return 0;
 }
@@ -140,7 +140,7 @@ out:
 }
 
 int
-cmumble_audio_create_playback_pipeline(struct cmumble_context *ctx,
+cmumble_audio_create_playback_pipeline(struct cmumlbe *cm,
 				       struct cmumble_user *user)
 {
 	GstElement *pipeline, *sink_bin;
@@ -171,40 +171,40 @@ cmumble_audio_create_playback_pipeline(struct cmumble_context *ctx,
 	gst_iterator_free(iter);
 
 	/* Setup Celt Decoder */
-	cmumble_audio_push(ctx, user,
-			   ctx->audio.celt_header_packet, sizeof(CELTHeader));
+	cmumble_audio_push(cm, user,
+			   cm->audio.celt_header_packet, sizeof(CELTHeader));
 	/* fake vorbiscomment buffer */
-	cmumble_audio_push(ctx, user, NULL, 0);
+	cmumble_audio_push(cm, user, NULL, 0);
 
 	return 0;
 }
 
 static int
-setup_playback_gst_pipeline(struct cmumble_context *ctx)
+setup_playback_gst_pipeline(struct cmumlbe *cm)
 {
-	ctx->audio.celt_mode = celt_mode_create(SAMPLERATE,
+	cm->audio.celt_mode = celt_mode_create(SAMPLERATE,
 						SAMPLERATE / 100, NULL);
-	celt_header_init(&ctx->audio.celt_header, ctx->audio.celt_mode, CHANNELS);
-	celt_header_to_packet(&ctx->audio.celt_header,
-			      ctx->audio.celt_header_packet, sizeof(CELTHeader));
+	celt_header_init(&cm->audio.celt_header, cm->audio.celt_mode, CHANNELS);
+	celt_header_to_packet(&cm->audio.celt_header,
+			      cm->audio.celt_header_packet, sizeof(CELTHeader));
 
 	return 0;
 }
 
 int
-cmumble_audio_init(struct cmumble_context *ctx)
+cmumble_audio_init(struct cmumlbe *cm)
 {
-	if (setup_playback_gst_pipeline(ctx) < 0)
+	if (setup_playback_gst_pipeline(cm) < 0)
 		return -1;
 
-	if (setup_recording_gst_pipeline(ctx) < 0)
+	if (setup_recording_gst_pipeline(cm) < 0)
 		return -1;
 
 	return 0;
 }
 
 int
-cmumble_audio_fini(struct cmumble_context *ctx)
+cmumble_audio_fini(struct cmumlbe *cm)
 {
 
 	return 0;
