@@ -6,6 +6,8 @@ i\
 #define MUMBLE_MSGS \\
 }
 
+# This code attempts to generate "MUMBLE_MSG(FooBar, foo_bar)" from "FooBar"
+
 # Backup original message name
 h
 # Prefix uppercase characters that follow a lowercase one
