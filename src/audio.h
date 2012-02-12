@@ -20,21 +20,21 @@ struct cmumble_audio {
 	CELTMode *celt_mode;
 };
 
-struct cmumlbe;
+struct cmumble;
 struct cmumble_user;
 
 int
-cmumble_audio_init(struct cmumlbe *cm);
+cmumble_audio_init(struct cmumble *cm);
 
 int
-cmumble_audio_fini(struct cmumlbe *cm);
+cmumble_audio_fini(struct cmumble *cm);
 
 int
-cmumble_audio_create_playback_pipeline(struct cmumlbe *cm,
+cmumble_audio_create_playback_pipeline(struct cmumble *cm,
 				       struct cmumble_user *user);
 
 void
-cmumble_audio_push(struct cmumlbe *cm, struct cmumble_user *user,
+cmumble_audio_push(struct cmumble *cm, struct cmumble_user *user,
 		   const guint8 *data, gsize size);
 
 #endif /* _AUDIO_H_ */

@@ -9,7 +9,7 @@
 #include "util.h"
 
 static void
-recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumlbe *cm)
+recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
 {
 	int64_t session, sequence;
 	uint32_t pos = 1, read = 0;
@@ -46,7 +46,7 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumlbe *cm)
 }
 
 static void
-recv_version(MumbleProto__Version *version, struct cmumlbe *cm)
+recv_version(MumbleProto__Version *version, struct cmumble *cm)
 {
 	g_print("version: 0x%x\n", version->version);
 	g_print("release: %s\n", version->release);
@@ -54,7 +54,7 @@ recv_version(MumbleProto__Version *version, struct cmumlbe *cm)
 
 static void
 recv_channel_state(MumbleProto__ChannelState *state,
-		   struct cmumlbe *cm)
+		   struct cmumble *cm)
 {
 	struct cmumble_channel *channel;
 
@@ -85,7 +85,7 @@ recv_channel_state(MumbleProto__ChannelState *state,
 }
 
 static void
-recv_server_sync(MumbleProto__ServerSync *sync, struct cmumlbe *cm)
+recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble *cm)
 {
 	cm->session = sync->session;
 	cm->user = find_user(cm, cm->session);
@@ -96,7 +96,7 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct cmumlbe *cm)
 }
 
 static void
-recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumlbe *cm)
+recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble *cm)
 {
 #if 0
 	int i;
@@ -124,14 +124,14 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumlbe *cm)
 
 static void
 recv_codec_version(MumbleProto__CodecVersion *codec,
-		   struct cmumlbe *cm)
+		   struct cmumble *cm)
 {
 	g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
 		codec->alpha, codec->beta, codec->prefer_alpha);
 }
 
 static void
-recv_user_remove(MumbleProto__UserRemove *remove, struct cmumlbe *cm)
+recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
 
@@ -145,7 +145,7 @@ recv_user_remove(MumbleProto__UserRemove *remove, struct cmumlbe *cm)
 }
 
 static void
-recv_user_state(MumbleProto__UserState *state, struct cmumlbe *cm)
+recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
 
@@ -175,7 +175,7 @@ recv_user_state(MumbleProto__UserState *state, struct cmumlbe *cm)
 }
 
 static void
-recv_text_message(MumbleProto__TextMessage *text, struct cmumlbe *cm)
+recv_text_message(MumbleProto__TextMessage *text, struct cmumble *cm)
 {
 	struct cmumble_user *user;
 
@@ -186,7 +186,7 @@ recv_text_message(MumbleProto__TextMessage *text, struct cmumlbe *cm)
 
 static const struct {
 #define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
-				   struct cmumlbe *);
+				   struct cmumble *);
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 } callbacks = {
@@ -219,7 +219,7 @@ static const struct {
 };
 
 static gboolean
-do_ping(struct cmumlbe *cm)
+do_ping(struct cmumble *cm)
 {
 	MumbleProto__Ping ping;
 	GTimeVal tv;
@@ -234,7 +234,7 @@ do_ping(struct cmumlbe *cm)
 }
 
 void
-cmumble_protocol_init(struct cmumlbe *cm)
+cmumble_protocol_init(struct cmumble *cm)
 {
 	MumbleProto__Version version;
 	MumbleProto__Authenticate authenticate;
@@ -281,7 +281,7 @@ static GOptionEntry entries[] = {
 
 int main(int argc, char **argv)
 {
-	struct cmumlbe cm;
+	struct cmumble cm;
 	GError *error = NULL;
 	GOptionContext *context;
 

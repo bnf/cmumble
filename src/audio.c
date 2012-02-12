@@ -7,7 +7,7 @@
 #define CHANNELS 1
 
 void
-cmumble_audio_push(struct cmumlbe *cm, struct cmumble_user *user,
+cmumble_audio_push(struct cmumble *cm, struct cmumble_user *user,
 		   const guint8 *data, gsize size)
 {
 	GstBuffer *gstbuf;
@@ -19,7 +19,7 @@ cmumble_audio_push(struct cmumlbe *cm, struct cmumble_user *user,
 static GstFlowReturn
 pull_buffer(GstAppSink *sink, gpointer user_data)
 {
-	struct cmumlbe *cm = user_data;
+	struct cmumble *cm = user_data;
 	GstBuffer *buf;
 	uint8_t data[1024];
 	uint32_t write = 0, pos = 0;
@@ -63,7 +63,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 }
 
 static int
-setup_recording_gst_pipeline(struct cmumlbe *cm)
+setup_recording_gst_pipeline(struct cmumble *cm)
 {
 	GstElement *pipeline, *cutter, *sink;
 	GError *error = NULL;
@@ -140,7 +140,7 @@ out:
 }
 
 int
-cmumble_audio_create_playback_pipeline(struct cmumlbe *cm,
+cmumble_audio_create_playback_pipeline(struct cmumble *cm,
 				       struct cmumble_user *user)
 {
 	GstElement *pipeline, *sink_bin;
@@ -180,7 +180,7 @@ cmumble_audio_create_playback_pipeline(struct cmumlbe *cm,
 }
 
 static int
-setup_playback_gst_pipeline(struct cmumlbe *cm)
+setup_playback_gst_pipeline(struct cmumble *cm)
 {
 	cm->audio.celt_mode = celt_mode_create(SAMPLERATE,
 						SAMPLERATE / 100, NULL);
@@ -192,7 +192,7 @@ setup_playback_gst_pipeline(struct cmumlbe *cm)
 }
 
 int
-cmumble_audio_init(struct cmumlbe *cm)
+cmumble_audio_init(struct cmumble *cm)
 {
 	if (setup_playback_gst_pipeline(cm) < 0)
 		return -1;
@@ -204,7 +204,7 @@ cmumble_audio_init(struct cmumlbe *cm)
 }
 
 int
-cmumble_audio_fini(struct cmumlbe *cm)
+cmumble_audio_fini(struct cmumble *cm)
 {
 
 	return 0;

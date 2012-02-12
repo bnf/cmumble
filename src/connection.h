@@ -14,13 +14,13 @@ struct cmumble_connection {
 	GSource *source;
 };
 
-struct cmumlbe;
+struct cmumble;
 
 int
-cmumble_connection_init(struct cmumlbe *cm,
+cmumble_connection_init(struct cmumble *cm,
 			const char *host, int port);
 
 int
-cmumble_connection_fini(struct cmumlbe *cm);
+cmumble_connection_fini(struct cmumble *cm);
 
 #endif /* _CONNECTION_H_ */

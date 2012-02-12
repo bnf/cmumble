@@ -12,9 +12,9 @@
 #include "audio.h"
 #include "commands.h"
 
-typedef void (*callback_t)(ProtobufCMessage *msg, struct cmumlbe *);
+typedef void (*callback_t)(ProtobufCMessage *msg, struct cmumble *);
 
-struct cmumlbe {
+struct cmumble {
 	struct cmumble_connection con;
 	struct cmumble_io io;
 	struct cmumble_audio audio;
@@ -72,6 +72,6 @@ enum udp_message_target {
 };
 
 void
-cmumble_protocol_init(struct cmumlbe *cm);
+cmumble_protocol_init(struct cmumble *cm);
 
 #endif

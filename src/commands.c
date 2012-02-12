@@ -9,7 +9,7 @@
 #include <readline/history.h>
 
 static void
-list_users(struct cmumlbe *cm,
+list_users(struct cmumble *cm,
 	   int argc, char **argv)
 {
 	struct cmumble_user *user = NULL;
@@ -23,7 +23,7 @@ list_users(struct cmumlbe *cm,
 }
 
 static void
-list_channels(struct cmumlbe *cm,
+list_channels(struct cmumble *cm,
 	      int argc, char **argv)
 {
 	struct cmumble_channel *channel = NULL;
@@ -37,7 +37,7 @@ list_channels(struct cmumlbe *cm,
 }
 
 static void
-quit(struct cmumlbe *cm,
+quit(struct cmumble *cm,
      int argc, char **argv)
 {
 	rl_already_prompted = 1;
@@ -45,7 +45,7 @@ quit(struct cmumlbe *cm,
 }
 
 static void
-clear(struct cmumlbe *cm,
+clear(struct cmumble *cm,
       int argc, char **argv)
 {
 	rl_clear_screen(0,0);
@@ -54,7 +54,7 @@ clear(struct cmumlbe *cm,
 }
 
 static void
-help(struct cmumlbe *cm,
+help(struct cmumble *cm,
      int argc, char **argv)
 {
 	int i;
@@ -65,7 +65,7 @@ help(struct cmumlbe *cm,
 }
 
 static void
-msg(struct cmumlbe *cm,
+msg(struct cmumble *cm,
     int argc, char **argv)
 {
 	MumbleProto__TextMessage message;
@@ -143,7 +143,7 @@ complete(const char *in, int n)
 }
 
 void
-cmumble_commands_init(struct cmumlbe *cm)
+cmumble_commands_init(struct cmumble *cm)
 {
 	cm->commands = commands;
 

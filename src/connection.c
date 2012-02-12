@@ -8,7 +8,7 @@ static gboolean
 read_cb(GObject *pollable_stream, gpointer data)
 {
 	GPollableInputStream *input = G_POLLABLE_INPUT_STREAM(pollable_stream);
-	struct cmumlbe *cm = data;
+	struct cmumble *cm = data;
 	gint count;
 
 	do {
@@ -21,7 +21,7 @@ read_cb(GObject *pollable_stream, gpointer data)
 static void
 connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
-	struct cmumlbe *cm = user_data;
+	struct cmumble *cm = user_data;
 	struct cmumble_connection *con = &cm->con;
 	GError *error = NULL;
 
@@ -54,7 +54,7 @@ connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 }
 
 int
-cmumble_connection_init(struct cmumlbe *cm,
+cmumble_connection_init(struct cmumble *cm,
 			const char *host, int port)
 {
 	struct cmumble_connection *con = &cm->con;
@@ -77,7 +77,7 @@ cmumble_connection_init(struct cmumlbe *cm,
 }
 
 int
-cmumble_connection_fini(struct cmumlbe *cm)
+cmumble_connection_fini(struct cmumble *cm)
 {
 	if (cm->con.source) {
 		g_source_remove(g_source_get_id(cm->con.source));

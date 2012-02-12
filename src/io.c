@@ -22,7 +22,7 @@ static gpointer global_rl_user_data = NULL;
 static gboolean
 read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
 {
-	struct cmumlbe *cm = data;
+	struct cmumble *cm = data;
 
 	if (condition & G_IO_IN) {
 		global_rl_user_data = cm;
@@ -144,7 +144,7 @@ command_split(char *cmd, char ***argv)
 static void
 process_line(char *line)
 {
-	struct cmumlbe *cm = global_rl_user_data;
+	struct cmumble *cm = global_rl_user_data;
 	int i;
 	int argc;
 	char **argv;
@@ -186,7 +186,7 @@ out:
 }
 
 int
-cmumble_io_init(struct cmumlbe *cm)
+cmumble_io_init(struct cmumble *cm)
 {
 	struct termios term;
 
@@ -217,7 +217,7 @@ cmumble_io_init(struct cmumlbe *cm)
 }
 
 int
-cmumble_io_fini(struct cmumlbe *cm)
+cmumble_io_fini(struct cmumble *cm)
 {
 	rl_callback_handler_remove();
 	g_io_channel_unref(cm->io.input_channel);
