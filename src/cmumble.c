@@ -184,6 +184,26 @@ recv_text_message(MumbleProto__TextMessage *text, struct cmumble *cm)
 		g_print("%s> %s\n", user->name, text->message);
 }
 
+static void
+recv_reject(MumbleProto__Reject *reject, struct cmumble *cm)
+{
+	switch (reject->type) {
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__None:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongVersion:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__InvalidUsername:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongUserPW:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__UsernameInUse:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__ServerFull:
+	case MUMBLE_PROTO__REJECT__REJECT_TYPE__NoCertificate:
+		g_printerr("Connection rejected: %s\n", reject->reason);
+		break;
+	default:
+		break;
+	}
+	g_main_loop_quit(cm->loop);
+}
+
 static const struct {
 #define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
 				   struct cmumble *);
@@ -194,7 +214,7 @@ static const struct {
 	.UDPTunnel		= recv_udp_tunnel,
 	.Authenticate		= NULL,
 	.Ping			= NULL,
-	.Reject			= NULL,
+	.Reject			= recv_reject,
 	.ServerSync		= recv_server_sync,
 	.ChannelRemove		= NULL,
 	.ChannelState		= recv_channel_state,
