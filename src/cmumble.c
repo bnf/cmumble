@@ -48,8 +48,10 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
 static void
 recv_version(MumbleProto__Version *version, struct cmumble *cm)
 {
-	g_print("version: 0x%x\n", version->version);
-	g_print("release: %s\n", version->release);
+	if (cm->verbose) {
+		g_print("version: 0x%x\n", version->version);
+		g_print("release: %s\n", version->release);
+	}
 }
 
 static void
@@ -92,7 +94,8 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble *cm)
 
 	if (sync->welcome_text)
 		g_print("Welcome Message: %s\n", sync->welcome_text);
-	g_print("got session: %d\n", cm->session);
+	if (cm->verbose)
+		g_print("got session: %d\n", cm->session);
 }
 
 static void
@@ -126,8 +129,9 @@ static void
 recv_codec_version(MumbleProto__CodecVersion *codec,
 		   struct cmumble *cm)
 {
-	g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
-		codec->alpha, codec->beta, codec->prefer_alpha);
+	if (cm->verbose)
+		g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
+			codec->alpha, codec->beta, codec->prefer_alpha);
 }
 
 static void
@@ -170,7 +174,8 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 		cm->user = user;
 
 	cmumble_audio_create_playback_pipeline(cm, user);
-	g_print("receive user: %s\n", user->name);
+	if (cm->verbose)
+		g_print("receive user: %s\n", user->name);
 	cm->users = g_list_prepend(cm->users, user);
 }
 
@@ -282,6 +287,7 @@ cmumble_protocol_init(struct cmumble *cm)
 gchar *user = "unkown";
 gchar *host = "localhost";
 gint port = 64738;
+gboolean verbose = FALSE;
 
 static GOptionEntry entries[] = {
 	{
@@ -295,6 +301,10 @@ static GOptionEntry entries[] = {
 	{
 		"port", 'p', 0, G_OPTION_ARG_INT, &port,
 		"port of the mumble server", "N"
+	},
+	{
+		"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose,
+		"Turn on verbosity", NULL
 	},
   	{ NULL }
 };
@@ -318,6 +328,7 @@ int main(int argc, char **argv)
 
 	cm.user_name = user;
 	cm.users = NULL;
+	cm.verbose = verbose;
 
 	g_type_init();
 	cm.loop = g_main_loop_new(NULL, FALSE);

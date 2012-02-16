@@ -34,6 +34,8 @@ struct cmumble {
 	GList *channels;
 
 	struct cmumble_user *user;
+
+	gboolean verbose;
 };
 
 struct cmumble_user {

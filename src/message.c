@@ -147,7 +147,9 @@ cmumble_recv_msg(struct cmumble *cm)
 		return 0;
 	}
 
-	g_print("debug: received message: %s type:%d, len:%d\n", messages[type].name, type, len);
+	if (cm->verbose)
+		g_print("debug: received message: %s type:%d, len:%d\n",
+			messages[type].name, type, len);
 	if (cm->callbacks[type])
 		cm->callbacks[type](msg, cm);
 
