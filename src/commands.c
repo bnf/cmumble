@@ -9,6 +9,34 @@
 #include <readline/history.h>
 
 static void
+join_channel(struct cmumble *cm,
+	     int argc, char **argv)
+{
+	MumbleProto__UserState state;
+	char *end;
+	long num;
+
+	if (argc < 1) {
+		g_print("usage: join <channel-number>");
+		return;
+	}
+
+	num = strtol(argv[1], &end, 10);
+	if (end == argv[1]) {
+		g_print("usage: join <channel-number>");
+		return;
+	}
+
+	mumble_proto__user_state__init(&state);
+	state.channel_id = num;
+	state.has_channel_id = 1;
+	state.session = cm->session;
+	state.has_session = 1;
+
+	cmumble_send_msg(cm, &state.base);
+}
+
+static void
 list_users(struct cmumble *cm,
 	   int argc, char **argv)
 {
@@ -18,7 +46,8 @@ list_users(struct cmumble *cm,
 	for (l = cm->users; l; l = l->next) {
 		user = l->data;
 
-		g_print("%4d: %s\n", user->session, user->name);
+		g_print("%4d: %s (channel: %s)\n", user->session, user->name,
+			user->channel->name);
 	}
 }
 
@@ -95,6 +124,7 @@ msg(struct cmumble *cm,
 }
 
 static const struct cmumble_command commands[] = {
+	{ "join", join_channel, "join channel [by id]" },
 	{ "lu", list_users, "list users" },
 	{ "lc", list_channels, "list channels" },
 	{ "clear", clear, "clear screen" },
