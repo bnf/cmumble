@@ -13,12 +13,18 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_ARG_VAR([PROTOC_C], [path to protoc-c utility])
-
 # Check for programs
 AC_PROG_CC
 AC_PROG_SED
-AC_PATH_PROG([PROTOC_C], [protoc-c], [false])
+
+AC_ARG_WITH([protoc],
+	    [AS_HELP_STRING([--with-protoc=COMMAND],
+	                    [use the given protoc command])],
+	                    [PROTOC_C=$withval],
+	                    [AC_PATH_PROG([PROTOC_C], [protoc-c], [false])])
+
+AS_IF([test "x$PROTOC_C" = "xfalse"],
+      [AC_MSG_ERROR([protoc-c compiler not found])])
 
 AC_CHECK_LIB([ncurses], [tputs],
 	     [], [AC_MSG_ERROR([ncurses needed for libreadline])])
