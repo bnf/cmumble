@@ -153,9 +153,6 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
 
-	if (!state->has_session)
-		return;
-
 	user = find_user(cm, state->session);
 	if (user) {
 		/* update */
@@ -166,10 +163,6 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 		return;
 	}
 
-	/* verify input data */
-	if (!state->has_user_id || !state->has_channel_id || !state->name)
-		return;
-
 	user = g_slice_new0(struct cmumble_user);
 	if (user == NULL) {
 		g_printerr("Out of memory.\n");
@@ -179,8 +172,6 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 	user->session = state->session;
 	user->name = g_strdup(state->name);
 	user->id = state->user_id;
-	/* FIXME: error out if channel not found?
-	 * That looks like malicious data. */
 	user->channel = find_channel(cm, state->channel_id);
 
 	if (cm->session == user->session)
