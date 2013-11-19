@@ -1,7 +1,7 @@
 1 {
 i\
-#ifndef _MESSAGE_LIST_H_ \
-#define _MESSAGE_LIST_H_ \
+#ifndef _MESSAGE_LIST_H_\
+#define _MESSAGE_LIST_H_\
 \
 #define MUMBLE_MSGS \\
 }
