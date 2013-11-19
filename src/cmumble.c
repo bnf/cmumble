@@ -154,6 +154,12 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
 
+	if (!state->has_session) {
+		if (cm->verbose)
+			g_print("%s: no session", __func__);
+		return;
+	}
+
 	user = find_user(cm, state->session);
 	if (user) {
 		/* update */
