@@ -13,12 +13,15 @@ static void
 recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
 {
 	int64_t session, sequence;
-	uint32_t pos = 1, read = 0;
+	uint32_t pos = 0, read = 0;
 	uint8_t frame_len, terminator;
 	struct cmumble_user *user = NULL;
 	uint8_t *data = tunnel->packet.data;
 	size_t len = tunnel->packet.len;
+	uint8_t type;
 
+	type = data[pos] >> 5;
+	pos += 1;
 	session  = decode_varint(&data[pos], &read, len-pos);
 	pos += read;
 	sequence = decode_varint(&data[pos], &read, len-pos);
@@ -26,8 +29,14 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
 
 	user = find_user(cm, session);
 	if (user == NULL) {
-		g_printerr("received audio packet from unknown user, "
+		g_printerr("Received audio packet from unknown user, "
 			   "dropping.\n");
+		return;
+	}
+
+	if (type != udp_voice_celt_alpha) {
+		g_printerr("Retrieved unimplemented codec %d from: %s\n",
+			   type, user->name);
 		return;
 	}
 
@@ -37,6 +46,9 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
 		pos += 1;
 
 		if (frame_len == 0 || frame_len > len-pos)
+			break;
+
+		if (frame_len < 2)
 			break;
 
 		cmumble_audio_push(cm, user, &data[pos], frame_len);
