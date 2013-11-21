@@ -250,14 +250,14 @@ static const struct {
 static gboolean
 do_ping(struct cmumble *cm)
 {
-	MumbleProto__Ping ping;
+	struct mumble_ping ping;
 	GTimeVal tv;
 
+	cmumble_init_ping(&ping);
 	g_get_current_time(&tv);
-	mumble_proto__ping__init(&ping);
-	ping.timestamp = tv.tv_sec;
-	ping.resync = 1;
-	cmumble_send_msg(cm, &ping.base);
+	ping.m.timestamp = tv.tv_sec;
+	ping.m.resync = 1;
+	cmumble_send_ping(cm, &ping);
 
 	return TRUE;
 }
