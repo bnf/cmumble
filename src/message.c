@@ -108,7 +108,7 @@ cmumble_recv_msg(struct cmumble *cm)
 	get_preamble(preamble, &type, &len);
 
 	if (!(type >= 0 && type < G_N_ELEMENTS(messages))) {
-		printf("unknown message type: %d\n", type);
+		g_printerr("unknown message type: %d\n", type);
 		return 0;
 	}
 
