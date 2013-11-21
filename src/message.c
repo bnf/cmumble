@@ -91,7 +91,8 @@ cmumble_recv_msg(struct cmumble *cm)
 		if (g_error_matches(error, G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK))
 			return 0;
 
-		if (g_error_matches(error, G_TLS_ERROR, G_TLS_ERROR_EOF)) {
+		if (g_error_matches(error, G_TLS_ERROR, G_TLS_ERROR_EOF) ||
+		    g_error_matches(error, G_TLS_ERROR, G_TLS_ERROR_MISC)) {
 			g_print("%s\n", error->message);
 			g_main_loop_quit(cm->loop);
 			return 0;
