@@ -184,7 +184,11 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 	if (cm->session == user->session)
 		cm->user = user;
 
-	cmumble_audio_create_playback_pipeline(cm, user);
+	/* FIXME: Rather than doing this ugly check by name here,
+	 * we should rather create the pipeline ondemand?
+	 */
+	if (g_strcmp0(user->name, cm->user_name) != 0)
+		cmumble_audio_create_playback_pipeline(cm, user);
 	if (cm->verbose)
 		g_print("receive user: %s\n", user->name);
 	cm->users = g_list_prepend(cm->users, user);
