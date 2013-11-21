@@ -198,14 +198,14 @@ static void
 recv_reject(MumbleProto__Reject *reject, struct cmumble *cm)
 {
 	switch (reject->type) {
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__None:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongVersion:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__InvalidUsername:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongUserPW:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__WrongServerPW:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__UsernameInUse:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__ServerFull:
-	case MUMBLE_PROTO__REJECT__REJECT_TYPE__NoCertificate:
+	case MUMBLE_REJECT_TYPE(None):
+	case MUMBLE_REJECT_TYPE(WrongVersion):
+	case MUMBLE_REJECT_TYPE(InvalidUsername):
+	case MUMBLE_REJECT_TYPE(WrongUserPW):
+	case MUMBLE_REJECT_TYPE(WrongServerPW):
+	case MUMBLE_REJECT_TYPE(UsernameInUse):
+	case MUMBLE_REJECT_TYPE(ServerFull):
+	case MUMBLE_REJECT_TYPE(NoCertificate):
 		g_printerr("Connection rejected: %s\n", reject->reason);
 		break;
 	default:
