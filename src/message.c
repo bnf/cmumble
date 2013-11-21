@@ -39,20 +39,16 @@ get_preamble(uint8_t *buffer, int *type, int *len)
 }
 
 void
-cmumble_send_msg(struct cmumble *cm, ProtobufCMessage *msg)
+cmumble_send_msg(struct cmumble *cm, ProtobufCMessage *msg,
+		 enum cmumble_message type)
 {
 	uint8_t pad[128];
 	uint8_t preamble[PREAMBLE_SIZE];
-	int type = -1;
-	int i;
 	ProtobufCBufferSimple buffer = PROTOBUF_C_BUFFER_SIMPLE_INIT(pad);
 
-	for (i = 0; i < G_N_ELEMENTS(messages); ++i)
-		if (messages[i].descriptor == msg->descriptor)
-			type = i;
-	assert(type >= 0);
+	assert(type < CMUMBLE_MESSAGE_COUNT);
 
-	if (type == UDPTunnel) {
+	if (type == CMUMBLE_MESSAGE_UDPTunnel) {
 		MumbleProto__UDPTunnel *tunnel = (MumbleProto__UDPTunnel *) msg;
 		buffer.data = tunnel->packet.data;
 		buffer.len = tunnel->packet.len;
@@ -107,7 +103,7 @@ cmumble_recv_msg(struct cmumble *cm)
 
 	get_preamble(preamble, &type, &len);
 
-	if (!(type >= 0 && type < G_N_ELEMENTS(messages))) {
+	if (!(type >= 0 && type < CMUMBLE_MESSAGE_COUNT)) {
 		g_printerr("unknown message type: %d\n", type);
 		return 0;
 	}
@@ -127,15 +123,15 @@ cmumble_recv_msg(struct cmumble *cm)
 
 	/* tunneled udp data - not a regular protobuf message
 	 * create dummy ProtobufCMessage */
-	if (type == UDPTunnel) {
+	if (type == CMUMBLE_MESSAGE_UDPTunnel) {
 		MumbleProto__UDPTunnel udptunnel;
 		mumble_proto__udptunnel__init(&udptunnel);
 
 		udptunnel.packet.len = len;
 		udptunnel.packet.data = (uint8_t *) data;
 
-		if (cm->callbacks[UDPTunnel])
-			cm->callbacks[UDPTunnel](&udptunnel.base, cm);
+		if (cm->callbacks[type])
+			cm->callbacks[type](&udptunnel.base, cm);
 
 		g_free(data);
 		return 0;

@@ -260,13 +260,13 @@ static const struct {
 static gboolean
 do_ping(struct cmumble *cm)
 {
-	struct mumble_ping ping;
+	mumble_ping_t ping;
 	GTimeVal tv;
 
 	cmumble_init_ping(&ping);
 	g_get_current_time(&tv);
-	ping.m.timestamp = tv.tv_sec;
-	ping.m.resync = 1;
+	ping.timestamp = tv.tv_sec;
+	ping.resync = 1;
 	cmumble_send_ping(cm, &ping);
 
 	return TRUE;
@@ -275,22 +275,22 @@ do_ping(struct cmumble *cm)
 void
 cmumble_protocol_init(struct cmumble *cm)
 {
-	MumbleProto__Version version;
-	MumbleProto__Authenticate authenticate;
+	mumble_version_t version;
+	mumble_authenticate_t authenticate;
 	GSource *source;
 
-	mumble_proto__version__init(&version);
+	cmumble_init_version(&version);
 	version.version = 0x010203;
 	version.release = PACKAGE_STRING;
 	version.os = "Gentoo/Linux";
-	cmumble_send_msg(cm, &version.base);
+	cmumble_send_version(cm, &version);
 
-	mumble_proto__authenticate__init(&authenticate);
+	cmumble_init_authenticate(&authenticate);
 	authenticate.username = cm->user_name;
 	authenticate.password = "";
 	authenticate.n_celt_versions = 1;
 	authenticate.celt_versions = (int32_t[]) { 0x8000000b };
-	cmumble_send_msg(cm, &authenticate.base);
+	cmumble_send_authenticate(cm, &authenticate);
 
 	source = g_timeout_source_new_seconds(5);
 	g_source_set_callback(source, (GSourceFunc) do_ping, cm, NULL);

@@ -23,7 +23,7 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	GstBuffer *buf;
 	uint8_t data[1024];
 	uint32_t write = 0, pos = 0;
-	MumbleProto__UDPTunnel tunnel;
+	mumble_udptunnel_t tunnel;
 	static int seq = 0;
 
 	/* FIXME: Make this more generic/disable pulling
@@ -54,10 +54,10 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 
 	gst_buffer_unref(buf);
 
-	mumble_proto__udptunnel__init(&tunnel);
+	cmumble_init_udptunnel(&tunnel);
 	tunnel.packet.data = data;
 	tunnel.packet.len = pos;
-	cmumble_send_msg(cm, &tunnel.base);
+	cmumble_send_udptunnel(cm, &tunnel);
 
 	return GST_FLOW_OK;
 }

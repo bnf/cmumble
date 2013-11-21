@@ -14,7 +14,7 @@ static void
 join_channel(struct cmumble *cm,
 	     int argc, char **argv)
 {
-	MumbleProto__UserState state;
+	mumble_user_state_t state;
 	char *end;
 	long num;
 
@@ -29,13 +29,13 @@ join_channel(struct cmumble *cm,
 		return;
 	}
 
-	mumble_proto__user_state__init(&state);
+	cmumble_init_user_state(&state);
 	state.channel_id = num;
 	state.has_channel_id = 1;
 	state.session = cm->session;
 	state.has_session = 1;
 
-	cmumble_send_msg(cm, &state.base);
+	cmumble_send_user_state(cm, &state);
 }
 
 static void
@@ -99,9 +99,9 @@ static void
 msg(struct cmumble *cm,
     int argc, char **argv)
 {
-	MumbleProto__TextMessage message;
+	mumble_text_message_t message;
 
-	mumble_proto__text_message__init(&message);
+	cmumble_init_text_message(&message);
 	message.actor = cm->session;
 
 	if (argc < 2) {
@@ -122,7 +122,7 @@ msg(struct cmumble *cm,
 	message.n_session = 0;
 	message.n_tree_id = 0;
 
-	cmumble_send_msg(cm, &message.base);
+	cmumble_send_text_message(cm, &message);
 }
 
 static const struct cmumble_command commands[] = {
