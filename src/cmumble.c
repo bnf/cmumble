@@ -215,8 +215,7 @@ recv_reject(MumbleProto__Reject *reject, struct cmumble *cm)
 }
 
 static const struct {
-#define MUMBLE_MSG(a,b) void (* a)(MumbleProto__##a *, \
-				   struct cmumble *);
+#define MUMBLE_MSG(a, b) void (* a)(MumbleProto__##a *, struct cmumble *);
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 } callbacks = {
