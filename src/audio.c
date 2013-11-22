@@ -146,6 +146,7 @@ cmumble_audio_create_playback_pipeline(struct cmumble *cm,
 	GstElement *pipeline, *sink_bin;
 	GError *error = NULL;
 	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink name=sink";
+	GstIterator *it;
 
 	pipeline = gst_parse_launch(desc, &error);
 	if (error) {
@@ -166,9 +167,9 @@ cmumble_audio_create_playback_pipeline(struct cmumble *cm,
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
 	sink_bin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
-	GstIterator *iter = gst_bin_iterate_sinks(GST_BIN(sink_bin));
-	gst_iterator_foreach(iter, set_pulse_states, user);
-	gst_iterator_free(iter);
+	it = gst_bin_iterate_sinks(GST_BIN(sink_bin));
+	gst_iterator_foreach(it, set_pulse_states, user);
+	gst_iterator_free(it);
 
 	/* Setup Celt Decoder */
 	cmumble_audio_push(cm, user,
