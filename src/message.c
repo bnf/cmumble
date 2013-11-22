@@ -130,7 +130,7 @@ cmumble_recv_msg(struct cmumble *cm)
 			cm->callbacks[type](&udptunnel.base, cm);
 
 		g_free(data);
-		return 0;
+		return 1;
 	}
 
 	msg = protobuf_c_message_unpack(messages[type].descriptor, NULL,
