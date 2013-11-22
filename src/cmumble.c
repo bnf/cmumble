@@ -10,7 +10,7 @@
 #include "util.h"
 
 static void
-recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
+recv_udp_tunnel(mumble_udptunnel_t *tunnel, struct cmumble *cm)
 {
 	int64_t session, sequence;
 	uint32_t pos = 0, read = 0;
@@ -59,7 +59,7 @@ recv_udp_tunnel(MumbleProto__UDPTunnel *tunnel, struct cmumble *cm)
 }
 
 static void
-recv_version(MumbleProto__Version *version, struct cmumble *cm)
+recv_version(mumble_version_t *version, struct cmumble *cm)
 {
 	if (cm->verbose) {
 		g_print("version: 0x%x\n", version->version);
@@ -68,8 +68,7 @@ recv_version(MumbleProto__Version *version, struct cmumble *cm)
 }
 
 static void
-recv_channel_state(MumbleProto__ChannelState *state,
-		   struct cmumble *cm)
+recv_channel_state(mumble_channel_state_t *state, struct cmumble *cm)
 {
 	struct cmumble_channel *channel;
 
@@ -100,7 +99,7 @@ recv_channel_state(MumbleProto__ChannelState *state,
 }
 
 static void
-recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble *cm)
+recv_server_sync(mumble_server_sync_t *sync, struct cmumble *cm)
 {
 	cm->session = sync->session;
 	cm->user = find_user(cm, cm->session);
@@ -112,7 +111,7 @@ recv_server_sync(MumbleProto__ServerSync *sync, struct cmumble *cm)
 }
 
 static void
-recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble *cm)
+recv_crypt_setup(mumble_crypt_setup_t *crypt, struct cmumble *cm)
 {
 #if 0
 	int i;
@@ -139,8 +138,7 @@ recv_crypt_setup(MumbleProto__CryptSetup *crypt, struct cmumble *cm)
 }
 
 static void
-recv_codec_version(MumbleProto__CodecVersion *codec,
-		   struct cmumble *cm)
+recv_codec_version(mumble_codec_version_t *codec, struct cmumble *cm)
 {
 	if (cm->verbose)
 		g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
@@ -148,7 +146,7 @@ recv_codec_version(MumbleProto__CodecVersion *codec,
 }
 
 static void
-recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble *cm)
+recv_user_remove(mumble_user_remove_t *remove, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
 
@@ -162,7 +160,7 @@ recv_user_remove(MumbleProto__UserRemove *remove, struct cmumble *cm)
 }
 
 static void
-recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
+recv_user_state(mumble_user_state_t *state, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
 
@@ -207,7 +205,7 @@ recv_user_state(MumbleProto__UserState *state, struct cmumble *cm)
 }
 
 static void
-recv_text_message(MumbleProto__TextMessage *text, struct cmumble *cm)
+recv_text_message(mumble_text_message_t *text, struct cmumble *cm)
 {
 	struct cmumble_user *user;
 
@@ -217,7 +215,7 @@ recv_text_message(MumbleProto__TextMessage *text, struct cmumble *cm)
 }
 
 static void
-recv_reject(MumbleProto__Reject *reject, struct cmumble *cm)
+recv_reject(mumble_reject_t *reject, struct cmumble *cm)
 {
 	switch (reject->type) {
 	case MUMBLE_REJECT_TYPE(None):
@@ -237,7 +235,7 @@ recv_reject(MumbleProto__Reject *reject, struct cmumble *cm)
 }
 
 static const struct {
-#define MUMBLE_MSG(a, b) void (* a)(MumbleProto__##a *, struct cmumble *);
+#define MUMBLE_MSG(a, b) void (* a)(mumble_##b##_t *, struct cmumble *);
 	MUMBLE_MSGS
 #undef MUMBLE_MSG
 } callbacks = {
