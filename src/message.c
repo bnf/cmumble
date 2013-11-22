@@ -3,8 +3,6 @@
 
 #define PREAMBLE_SIZE 6
 
-GStaticMutex write_mutex = G_STATIC_MUTEX_INIT;
-
 static const struct {
 	const ProtobufCMessageDescriptor *descriptor;
 	const char *name;
@@ -59,10 +57,8 @@ cmumble_send_msg(struct cmumble *cm, ProtobufCMessage *msg,
 
 	add_preamble(preamble, type, buffer.len);
 
-	g_static_mutex_lock(&write_mutex);
 	g_output_stream_write(cm->con.output, preamble, PREAMBLE_SIZE, NULL, NULL);
 	g_output_stream_write(cm->con.output, buffer.data, buffer.len, NULL, NULL);
-	g_static_mutex_unlock(&write_mutex);
 
 	PROTOBUF_C_BUFFER_SIMPLE_CLEAR(&buffer);
 }
