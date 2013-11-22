@@ -62,6 +62,29 @@ pull_buffer(GstAppSink *sink, gpointer user_data)
 	return GST_FLOW_OK;
 }
 
+static gboolean
+idle(gpointer user_data)
+{
+	struct cmumble *cm = user_data;
+	GstAppSink *sink;
+
+	while ((sink = g_async_queue_try_pop(cm->async_queue)) != NULL)
+		pull_buffer(sink, cm);
+
+	return FALSE;
+}
+
+static GstFlowReturn
+new_buffer(GstAppSink *sink, gpointer user_data)
+{
+	struct cmumble *cm = user_data;
+
+	g_async_queue_push(cm->async_queue, sink);
+	g_idle_add(idle, cm);
+
+	return GST_FLOW_OK;
+}
+
 static int
 setup_recording_gst_pipeline(struct cmumble *cm)
 {
@@ -88,7 +111,7 @@ setup_recording_gst_pipeline(struct cmumble *cm)
 
 	gst_app_sink_set_emit_signals(cm->audio.sink, TRUE);
 	gst_app_sink_set_drop(cm->audio.sink, FALSE);;
-	g_signal_connect(sink, "new-buffer", G_CALLBACK(pull_buffer), cm);
+	g_signal_connect(sink, "new-buffer", G_CALLBACK(new_buffer), cm);
 
 	caps = gst_caps_new_simple("audio/x-celt",
 				   "rate", G_TYPE_INT, SAMPLERATE,

@@ -22,6 +22,7 @@ struct cmumble {
 	const struct cmumble_command *commands;
 
 	GMainLoop *loop;
+	GAsyncQueue *async_queue;
 
 	uint32_t session;
 	gboolean authenticated;

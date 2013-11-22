@@ -358,6 +358,10 @@ int main(int argc, char **argv)
 	cm.loop = g_main_loop_new(NULL, FALSE);
 	cm.callbacks = (const callback_t *) &callbacks;
 
+	cm.async_queue = g_async_queue_new_full(g_free);
+	if (cm.async_queue == NULL)
+		return 1;
+
 	cmumble_commands_init(&cm);
 	if (cmumble_connection_init(&cm, host, port) < 0)
 		return 1;
@@ -375,6 +379,7 @@ int main(int argc, char **argv)
 	cmumble_io_fini(&cm);
 	cmumble_audio_fini(&cm);
 	cmumble_connection_fini(&cm);
+	g_async_queue_unref(cm.async_queue);
 
 	return 0;
 }
