@@ -375,7 +375,7 @@ int main(int argc, char **argv)
 	g_main_loop_unref(cm.loop);
 
 	cmumble_io_fini(&cm);
-	cmumble_audio_init(&cm);
+	cmumble_audio_fini(&cm);
 	cmumble_connection_fini(&cm);
 
 	return 0;
