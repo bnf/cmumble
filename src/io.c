@@ -67,7 +67,7 @@ static char *
 skip_whitespace(char *text)
 {
 	int i;
-	
+
 	for (i = 0; text[i] != '\0'; ++i) {
 		if (text[i] != ' ')
 			return &text[i];
@@ -92,7 +92,7 @@ static char *
 skip_non_whitespace(char *text, char delimiter)
 {
 	int i;
-	
+
 	for (i = 0; text[i] != '\0'; ++i) {
 		if (text[i] == delimiter && !is_escaped(text, i, '\\'))
 			return &text[i];

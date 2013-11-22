@@ -23,7 +23,7 @@ add_preamble(uint8_t *buffer, uint16_t type, uint32_t len)
 	buffer[5] = (len) & 0xff;
 	buffer[4] = (len >> 8) & 0xff;
 	buffer[3] = (len >> 16) & 0xff;
-	buffer[2] = (len >> 24) & 0xff;	
+	buffer[2] = (len >> 24) & 0xff;
 }
 
 static void

@@ -170,7 +170,7 @@ complete(const char *in, int n)
 		if (strncmp(name, in, len) == 0)
 			return g_strdup(name);
 	}
-	
+
 	return NULL;
 }
 

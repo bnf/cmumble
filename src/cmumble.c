@@ -94,7 +94,7 @@ recv_channel_state(MumbleProto__ChannelState *state,
 	channel->parent = state->parent;
 	if (state->description)
 		channel->description = g_strdup(state->description);
-	
+
 	channel->temporary = state->temporary;
 	channel->position = state->position;
 }
