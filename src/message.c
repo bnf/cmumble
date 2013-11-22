@@ -120,9 +120,9 @@ cmumble_recv_msg(struct cmumble *cm)
 	/* tunneled udp data - not a regular protobuf message
 	 * create dummy ProtobufCMessage */
 	if (type == CMUMBLE_MESSAGE_UDPTunnel) {
-		MumbleProto__UDPTunnel udptunnel;
-		mumble_proto__udptunnel__init(&udptunnel);
+		mumble_udptunnel_t udptunnel;
 
+		cmumble_init_udptunnel(&udptunnel);
 		udptunnel.packet.len = len;
 		udptunnel.packet.data = (uint8_t *) data;
 
