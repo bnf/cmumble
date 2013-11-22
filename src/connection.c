@@ -48,7 +48,6 @@ connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 	con->source = g_pollable_input_stream_create_source(con->input, NULL);
 	g_source_set_callback(con->source, (GSourceFunc) read_cb, cm, NULL);
 	g_source_attach(con->source, NULL);
-	g_source_unref(con->source);
 
 	cmumble_protocol_init(cm);
 }
