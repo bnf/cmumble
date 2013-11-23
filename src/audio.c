@@ -141,11 +141,12 @@ set_pulse_states(gpointer data, gpointer user_data)
 					 "stream-properties") == NULL)
 		goto out;
 
-	/* configure pulseaudio to use:
+	/* FIXME: Move this into a man-page or so:
+	 * Dear User: Add the following to the pulseaudio configuration:
 	 * load-module module-device-manager "do_routing=1"
-	 * or new users may join to default output which is not headset?
+	 * This is to let new join users default to e.g. a headset output.
 	 * Also consider setting device.intended_roles = "phone" for your
-	 * wanted default output (if you dont have a usb headset dev). */
+	 * output to be marked as headset (if you dont have a usb headset dev). */
 
 	name = g_strdup_printf("cmumble [%s]", user->name);
 
