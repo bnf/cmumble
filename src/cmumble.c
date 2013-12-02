@@ -299,7 +299,7 @@ cmumble_protocol_init(struct cmumble *cm)
 	authenticate.username = cm->user_name;
 	authenticate.password = "";
 	authenticate.n_celt_versions = 1;
-	authenticate.celt_versions = (int32_t[]) { 0x8000000b };
+	authenticate.celt_versions = &cm->audio.celt_bitstream_version;
 	cmumble_send_authenticate(cm, &authenticate);
 
 	source = g_timeout_source_new_seconds(5);
@@ -362,15 +362,15 @@ int main(int argc, char **argv)
 	if (cm.async_queue == NULL)
 		return 1;
 
-	cmumble_commands_init(&cm);
-	if (cmumble_connection_init(&cm, host, port) < 0)
-		return 1;
-
 	gst_init(&argc, &argv);
-
 	if (cmumble_audio_init(&cm) < 0)
 		return 1;
+
+	cmumble_commands_init(&cm);
 	cmumble_io_init(&cm);
+
+	if (cmumble_connection_init(&cm, host, port) < 0)
+		return 1;
 
 	g_main_loop_run(cm.loop);
 

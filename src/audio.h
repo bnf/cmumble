@@ -18,6 +18,8 @@ struct cmumble_audio {
 	guint8 celt_header_packet[sizeof(CELTHeader)];
 	CELTHeader celt_header;
 	CELTMode *celt_mode;
+
+	gint32 celt_bitstream_version;
 };
 
 struct cmumble;
