@@ -27,7 +27,7 @@ struct cmumble {
 	uint32_t session;
 	gboolean authenticated;
 
-	char *user_name;
+	const char *user_name;
 
 	int64_t sequence;
 

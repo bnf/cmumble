@@ -296,7 +296,7 @@ cmumble_protocol_init(struct cmumble *cm)
 	cmumble_send_version(cm, &version);
 
 	cmumble_init_authenticate(&authenticate);
-	authenticate.username = cm->user_name;
+	authenticate.username = (char *) cm->user_name;
 	authenticate.password = "";
 	authenticate.n_celt_versions = 1;
 	authenticate.celt_versions = &cm->audio.celt_bitstream_version;
@@ -308,8 +308,8 @@ cmumble_protocol_init(struct cmumble *cm)
 	g_source_unref(source);
 }
 
-gchar *user = "unkown";
-gchar *host = "localhost";
+const gchar *user = NULL;
+const gchar *host = "localhost";
 gint port = 64738;
 gboolean verbose = FALSE;
 
@@ -350,7 +350,7 @@ int main(int argc, char **argv)
 
 	memset(&cm, 0, sizeof(cm));
 
-	cm.user_name = user;
+	cm.user_name = user ? user : g_get_user_name();
 	cm.users = NULL;
 	cm.verbose = verbose;
 
