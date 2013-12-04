@@ -7,6 +7,9 @@
 gpointer
 cmumble_find_by_id(GList *list, gsize member_offset, guint id);
 
+char *
+cmumble_get_os_name(void);
+
 static inline struct cmumble_user *
 find_user(struct cmumble *cm, uint32_t session_id)
 {

@@ -292,8 +292,9 @@ cmumble_protocol_init(struct cmumble *cm)
 	cmumble_init_version(&version);
 	version.version = 0x010203;
 	version.release = PACKAGE_STRING;
-	version.os = "Gentoo/Linux";
+	version.os = cmumble_get_os_name();
 	cmumble_send_version(cm, &version);
+	g_free(version.os);
 
 	cmumble_init_authenticate(&authenticate);
 	authenticate.username = (char *) cm->user_name;
