@@ -189,6 +189,8 @@ cmumble_audio_create_playback_pipeline(struct cmumble *cm,
 
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
+	/* FIXME: Use a recursive name for sink-actual-sink-pluse instead? like:
+	 * gst_bin_get_by_name(GST_BIN(pipeline), "sink-actual-sink-pulse"); */
 	sink_bin = gst_bin_get_by_name(GST_BIN(pipeline), "sink");
 	it = gst_bin_iterate_sinks(GST_BIN(sink_bin));
 	gst_iterator_foreach(it, set_pulse_states, user);
