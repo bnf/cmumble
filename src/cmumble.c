@@ -186,6 +186,7 @@ recv_user_state(mumble_user_state_t *state, struct cmumble *cm)
 		exit(1);
 	}
 
+	/* FIXME: Verify values, that need to be available. */
 	user->session = state->session;
 	user->name = g_strdup(state->name);
 	user->id = state->user_id;
