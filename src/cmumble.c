@@ -276,7 +276,9 @@ do_ping(struct cmumble *cm)
 	cmumble_init_ping(&ping);
 	g_get_current_time(&tv);
 	ping.timestamp = tv.tv_sec;
+	ping.has_timestamp = 1;
 	ping.resync = 1;
+	ping.has_resync = 1;
 	cmumble_send_ping(cm, &ping);
 
 	return TRUE;
@@ -291,6 +293,7 @@ cmumble_protocol_init(struct cmumble *cm)
 
 	cmumble_init_version(&version);
 	version.version = 0x010203;
+	version.has_version = 1;
 	version.release = PACKAGE_STRING;
 	version.os = cmumble_get_os_name();
 	cmumble_send_version(cm, &version);

@@ -103,6 +103,7 @@ msg(struct cmumble *cm,
 
 	cmumble_init_text_message(&message);
 	message.actor = cm->session;
+	message.has_actor = 1;
 
 	if (argc < 2) {
 		g_print("usage: msg message\n");
