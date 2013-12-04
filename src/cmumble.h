@@ -54,7 +54,7 @@ struct cmumble_channel {
 	uint32_t parent;
 	char *name;
 	char *description;
-	
+
 	gboolean temporary;
 	int32_t position;
 };
