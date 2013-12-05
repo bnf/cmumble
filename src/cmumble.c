@@ -141,8 +141,10 @@ static void
 recv_codec_version(mumble_codec_version_t *codec, struct cmumble *cm)
 {
 	if (cm->verbose)
-		g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d\n",
-			codec->alpha, codec->beta, codec->prefer_alpha);
+		g_print("Codec Version: alpha: %d, beta: %d, pefer_alpha: %d "
+			"Opus: %d\n",
+			codec->alpha, codec->beta, codec->prefer_alpha,
+			codec->opus);
 }
 
 static void
