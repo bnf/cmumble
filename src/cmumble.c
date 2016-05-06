@@ -359,7 +359,6 @@ int main(int argc, char **argv)
 	cm.users = NULL;
 	cm.verbose = verbose;
 
-	g_type_init();
 	cm.loop = g_main_loop_new(NULL, FALSE);
 	cm.callbacks = (const callback_t *) &callbacks;
 
