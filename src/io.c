@@ -41,7 +41,7 @@ print_preserve_prompt(const gchar *string)
 	char *line;
 
 	/* FIXME */
-	gboolean preserve = (rl_readline_state & RL_STATE_TERMPREPPED);
+	gboolean preserve = RL_ISSTATE(RL_STATE_TERMPREPPED);
 	//preserve = 1;
 
 	if (preserve) {
