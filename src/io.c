@@ -183,7 +183,7 @@ process_line(char *line)
 	if (cm->commands[i].name == NULL)
 		g_print("Unknown command: %s\n", line);
 out:
-	free(line);
+	g_free(line);
 }
 
 int
