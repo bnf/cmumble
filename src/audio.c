@@ -211,7 +211,12 @@ setup_playback_gst_pipeline(struct cmumble *cm)
 {
 	cm->audio.celt_mode = celt_mode_create(SAMPLERATE,
 					       SAMPLERATE / 100, NULL);
+
+#ifdef HAVE_CELT_071
 	celt_header_init(&cm->audio.celt_header, cm->audio.celt_mode, CHANNELS);
+#else
+	celt_header_init(&cm->audio.celt_header, cm->audio.celt_mode, SAMPLERATE/100, CHANNELS);
+#endif
 	celt_header_to_packet(&cm->audio.celt_header,
 			      cm->audio.celt_header_packet, sizeof(CELTHeader));
 

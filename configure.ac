@@ -39,7 +39,15 @@ PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],[], [
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.28])
 PKG_CHECK_MODULES(GIO,  [gio-2.0])
 PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10 gstreamer-app-0.10])
-PKG_CHECK_MODULES(CELT, [celt])
+PKG_CHECK_MODULES(CELT, [celt], [have_celt=yes], [have_celt=no])
+if test "x$have_celt" = xno; then
+	PKG_CHECK_MODULES(CELT, [celt071], [have_celt071=yes], [have_celt071=no])
+	if test "x$have_celt071" = xno; then
+		AC_MSG_ERROR([Neither celt nor celt071 found.])
+	fi
+	AC_DEFINE([HAVE_CELT071], [1], [Defined if we're using celt071])
+fi
+
 
 GST_ELEMENTS="appsrc appsink celtdec celtenc capsfilter
 	      audioconvert audioresample autoaudiosrc autoaudiosink"

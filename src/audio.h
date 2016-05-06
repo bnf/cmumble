@@ -8,8 +8,13 @@
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappbuffer.h>
 
+#ifdef HAVE_CELT071
+#include <celt071/celt.h>
+#include <celt071/celt_header.h>
+#else
 #include <celt/celt.h>
 #include <celt/celt_header.h>
+#endif
 
 struct cmumble_audio {
 	GstElement *record_pipeline;
