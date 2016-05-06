@@ -21,7 +21,7 @@
 static gpointer global_rl_user_data = NULL;
 
 static gboolean
-read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
+stdin_callback(GIOChannel *source, GIOCondition condition, gpointer data)
 {
 	struct cmumble *cm = data;
 
@@ -194,7 +194,7 @@ cmumble_io_init(struct cmumble *cm)
 	cm->io.input_channel = g_io_channel_unix_new(STDIN_FILENO);
 
 	g_io_add_watch(cm->io.input_channel, G_IO_IN | G_IO_HUP,
-		       read_cb, cm);
+		       stdin_callback, cm);
 
 	if (tcgetattr(STDIN_FILENO, &term) < 0) {
 		g_printerr("tcgetattr failed");
