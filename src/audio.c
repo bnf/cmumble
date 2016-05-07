@@ -3,6 +3,8 @@
 #include "cmumble.h"
 #include <string.h>
 
+#include <speex/speex_jitter.h>
+
 #define SAMPLERATE 48000
 #define CHANNELS 1
 
@@ -85,6 +87,12 @@ new_buffer(GstAppSink *sink, gpointer user_data)
 	return GST_FLOW_OK;
 }
 
+/* TODO pulseaudio with echo cancellation/webrtc audio processing?
+ *
+ * https://www.freedesktop.org/software/pulseaudio/webrtc-audio-processing/
+ *
+ */
+
 static int
 setup_recording_gst_pipeline(struct cmumble *cm)
 {
@@ -163,10 +171,114 @@ out:
 	g_object_unref(G_OBJECT(elm));
 }
 
+
+/* This is called whenever the context status changes */
+static void context_state_callback(pa_context *c, void *userdata) {
+	struct cmumble_user *user = userdata;
+	assert(c);
+
+	switch (pa_context_get_state(c)) {
+	case PA_CONTEXT_CONNECTING:
+	case PA_CONTEXT_AUTHORIZING:
+	case PA_CONTEXT_SETTING_NAME:
+		break;
+
+	case PA_CONTEXT_READY: {
+		int r;
+		pa_stream *stream = NULL;
+
+		static const pa_sample_spec ss = {
+			.format   = PA_SAMPLE_S16LE,
+			.rate     = SAMPLERATE,
+			.channels = CHANNELS
+		};
+
+
+		gchar *name;
+		stream_name = g_strdup_printf("cmumble [%s]", user->name);
+		/* TODO: use pa_stream_new_with_proplist and set filter.want=echo-cancel */
+		if (!(stream = pa_stream_new(c, stream_name, &ss, NULL))) {
+			fprintf(stderr, "pa_stream_new() failed: %s\n", pa_strerror(pa_context_errno(c)));
+			g_free(name);
+			goto fail;
+		}
+		g_free(stream_name);
+		user->stream = stream;
+
+		pa_stream_set_state_callback(stream, stream_state_callback, NULL);
+		pa_stream_set_write_callback(stream, stream_write_callback, NULL);
+		pa_stream_set_read_callback(stream, stream_read_callback, NULL);
+		pa_stream_set_suspended_callback(stream, stream_suspended_callback, NULL);
+		pa_stream_set_moved_callback(stream, stream_moved_callback, NULL);
+		pa_stream_set_underflow_callback(stream, stream_underflow_callback, NULL);
+		pa_stream_set_overflow_callback(stream, stream_overflow_callback, NULL);
+		pa_stream_set_started_callback(stream, stream_started_callback, NULL);
+		pa_stream_set_event_callback(stream, stream_event_callback, NULL);
+		pa_stream_set_buffer_attr_callback(stream, stream_buffer_attr_callback, NULL);
+
+		if ((r = pa_stream_connect_playback(stream, NULL, NULL, 0, NULL, NULL)) < 0) {
+			g_printerr("pa_stream_connect_playback() failed: %s\n", pa_strerror(pa_context_errno(c)));
+			goto fail;
+		}
+
+		break;
+	}
+
+	case PA_CONTEXT_TERMINATED:
+		//quit(0);
+		//TODO: destroy user pipeline
+		break;
+
+	case PA_CONTEXT_FAILED:
+	default:
+		fprintf(stderr, _("Connection failure: %s\n"), pa_strerror(pa_context_errno(c)));
+		goto fail;
+	}
+
+	return;
+
+fail:
+	quit(1);
+
+}
+
 int
 cmumble_audio_create_playback_pipeline(struct cmumble *cm,
 				       struct cmumble_user *user)
 {
+	pa_mainloop_api  *mainloop_api = NULL;
+	pa_glib_mainloop *m            = NULL;
+	int r;
+
+	if (!(m = pa_glib_mainloop_new(NULL))) {
+		g_printerr("pa_glib_mainloop_new failed\n");
+		return -1;
+	}
+	cm->mainloop_api = pa_glib_mainloop_get_api(m);
+
+	if (!(user->context = pa_context_new(mainloop_api, "cmumble"))) {
+		return -1;
+		/*
+		interface_set_status(&ctx.interface,
+				     "pa_context_new failed: %s\n",
+				     pa_strerror(pa_context_errno(ctx.context)));
+				     */
+	}
+
+	// define callback for connection init
+	pa_context_set_state_callback(user->context,
+				      context_state_callback, &user);
+	if (pa_context_connect(user->context, NULL,
+			       PA_CONTEXT_NOAUTOSPAWN, NULL)) {
+		return -1;
+		/*
+		interface_set_status(&ctx.interface,
+				     "pa_context_connect failed: %s\n",
+				     pa_strerror(pa_context_errno(ctx.context)));
+		*/
+	}
+	
+
 	GstElement *pipeline, *sink_bin;
 	GError *error = NULL;
 	char *desc = "appsrc name=src ! celtdec ! audioconvert ! autoaudiosink name=sink";
@@ -211,7 +323,6 @@ setup_playback_gst_pipeline(struct cmumble *cm)
 {
 	cm->audio.celt_mode = celt_mode_create(SAMPLERATE,
 					       SAMPLERATE / 100, NULL);
-
 #ifdef HAVE_CELT_071
 	celt_header_init(&cm->audio.celt_header, cm->audio.celt_mode, CHANNELS);
 #else

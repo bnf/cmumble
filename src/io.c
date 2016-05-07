@@ -201,6 +201,9 @@ cmumble_io_init(struct cmumble *cm)
 		return -1;
 	}
 
+	/* TODO: Maybe add comments why tcsetattr is needed?
+	         (as in readline/examples/excallback.c)
+	         Rename io.term to io.term_backup? */
 	cm->io.term = term;
 	term.c_lflag &= ~ICANON;
 	term.c_cc[VTIME] = 1;

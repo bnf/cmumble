@@ -9,9 +9,9 @@ cmumble_SOURCES = cmumble.c message.c varint.c io.c \
 nodist_cmumble_SOURCES = mumble.pb-c.c
 
 cmumble_LDADD = $(PROTOBUF_LIBS) $(GLIB_LIBS) $(GIO_LIBS) \
-		$(GSTREAMER_LIBS) $(CELT_LIBS)
+		$(GSTREAMER_LIBS) $(CELT_LIBS) $(SPEEX_LIBS)
 AM_CPPFLAGS = $(PROTOBUF_CFLAGS) $(GLIB_CFLAGS) $(GIO_CFLAGS) \
-	      $(GSTREAMER_CFLAGS) $(CELT_CFLAGS)
+	      $(GSTREAMER_CFLAGS) $(CELT_CFLAGS) $(SPEEX_LIBS)
 
 AM_CFLAGS = $(GCC_CFLAGS)
 

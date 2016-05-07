@@ -48,15 +48,7 @@ if test "x$have_celt" = xno; then
 	AC_DEFINE([HAVE_CELT071], [1], [Defined if we're using celt071])
 fi
 
-
-GST_ELEMENTS="appsrc appsink celtdec celtenc capsfilter
-	      audioconvert audioresample autoaudiosrc autoaudiosink"
-
-for element in $GST_ELEMENTS
-do
-	AM_GST_ELEMENT_CHECK([$element], [],
-			     AC_MSG_ERROR([gstreamer element $element not found]))
-done
+PKG_CHECK_MODULES(SPEEX, [speex speexdsp])
 
 if test "x$GCC" = "xyes"; then
 	GCC_CFLAGS="-Wall -g -Wstrict-prototypes -Wmissing-prototypes -fvisibility=hidden"

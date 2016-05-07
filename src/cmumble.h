@@ -63,7 +63,8 @@ enum udp_message_type {
 	udp_voice_celt_alpha,
 	udp_ping,
 	udp_voice_speex,
-	udp_voice_celt_beta
+	udp_voice_celt_beta,
+	udp_voice_opus
 };
 
 enum udp_message_target {

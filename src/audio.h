@@ -3,10 +3,8 @@
 
 #include <glib.h>
 
-#include <gst/gst.h>
-#include <gst/app/gstappsrc.h>
-#include <gst/app/gstappsink.h>
-#include <gst/app/gstappbuffer.h>
+#include <pulse/pulseaudio.h>
+#include <pulse/glib-mainloop.h>
 
 #ifdef HAVE_CELT071
 #include <celt071/celt.h>
@@ -17,8 +15,8 @@
 #endif
 
 struct cmumble_audio {
-	GstElement *record_pipeline;
-	GstAppSink *sink;
+	//GstElement *record_pipeline;
+	//GstAppSink *sink;
 
 	guint8 celt_header_packet[sizeof(CELTHeader)];
 	CELTHeader celt_header;
