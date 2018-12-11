@@ -1,16 +1,12 @@
 #ifndef _AUDIO_H_
 #define _AUDIO_H_
 
-#include "../config.h"
-
 #include <glib.h>
 
-#include <pulse/pulseaudio.h>
-#include <pulse/glib-mainloop.h>
-
-#include <speex/speex.h>
-#include <speex/speex_jitter.h>
-#include <opus/opus.h>
+#include <gst/gst.h>
+#include <gst/app/gstappsrc.h>
+#include <gst/app/gstappsink.h>
+#include <gst/app/gstappbuffer.h>
 
 #ifdef HAVE_CELT071
 #include <celt071/celt.h>
@@ -21,21 +17,14 @@
 #endif
 
 struct cmumble_audio {
-	//GstElement *record_pipeline;
-	//GstAppSink *sink;
+	GstElement *record_pipeline;
+	GstAppSink *sink;
 
 	guint8 celt_header_packet[sizeof(CELTHeader)];
-	CELTEncoder *celt_encoder;
 	CELTHeader celt_header;
 	CELTMode *celt_mode;
 
 	gint32 celt_bitstream_version;
-
-	void *record_buffer;
-	size_t record_buffer_length;
-	size_t record_buffer_index;
-	size_t record_buffer_decode_pos;
-
 };
 
 struct cmumble;

@@ -4,7 +4,7 @@ AC_INIT([cmumble],
         [0.1],
         [benjaminfranzke@googlemail.com],
         [cmumble],
-        [https://gitorious.org/cmumble/])
+        [https://git.bnfr.net/cmumble])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -38,7 +38,6 @@ PKG_CHECK_MODULES(PROTOBUF, [libprotobuf-c],[], [
 ])
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.28])
 PKG_CHECK_MODULES(GIO,  [gio-2.0])
-PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10 gstreamer-app-0.10])
 PKG_CHECK_MODULES(CELT, [celt], [have_celt=yes], [have_celt=no])
 if test "x$have_celt" = xno; then
 	PKG_CHECK_MODULES(CELT, [celt071], [have_celt071=yes], [have_celt071=no])
@@ -49,6 +48,10 @@ if test "x$have_celt" = xno; then
 fi
 
 PKG_CHECK_MODULES(SPEEX, [speex speexdsp])
+PKG_CHECK_MODULES(OPUS, [opus])
+
+PKG_CHECK_MODULES(PULSE, [libpulse], [], AC_MSG_ERROR([libpulse required]))
+PKG_CHECK_MODULES(PULSE_MAINLOOP, [libpulse-mainloop-glib], [], AC_MSG_ERROR([libpulse-mainloop-glib required]))
 
 if test "x$GCC" = "xyes"; then
 	GCC_CFLAGS="-Wall -g -Wstrict-prototypes -Wmissing-prototypes -fvisibility=hidden"

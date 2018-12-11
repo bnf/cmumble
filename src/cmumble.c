@@ -81,33 +81,56 @@ recv_channel_state(mumble_channel_state_t *state, struct cmumble *cm)
 		}
 		cm->channels = g_list_prepend(cm->channels, channel);
 
-		if (channel->name)
+		/* TODO: these look stupid, probably never executed? */
+		if (channel->name) {
 			g_free(channel->name);
-		if (channel->description)
+			channel->name = NULL;
+		}
+		if (channel->description) {
 			g_free(channel->description);
+			channel->description = NULL;
+		}
 	}
 
-	channel->id = state->channel_id;
-	if (state->name)
+	if (state->has_channel_id) {
+		channel->id = state->channel_id;
+	}
+	if (state->name) {
+		if (channel->name) {
+			g_free(channel->name);
+			channel->name = NULL;
+		}
 		channel->name = g_strdup(state->name);
+	}
 	channel->parent = state->parent;
-	if (state->description)
+	if (state->description) {
+		if (channel->description) {
+			g_free(channel->description);
+			channel->description = NULL;
+		}
 		channel->description = g_strdup(state->description);
+	}
 
-	channel->temporary = state->temporary;
-	channel->position = state->position;
+	if (state->has_temporary) {
+		channel->temporary = state->temporary;
+	}
+	if (state->has_position) {
+		channel->position = state->position;
+	}
 }
 
 static void
 recv_server_sync(mumble_server_sync_t *sync, struct cmumble *cm)
 {
-	cm->session = sync->session;
-	cm->user = find_user(cm, cm->session);
-
 	if (sync->welcome_text)
 		g_print("Welcome Message: %s\n", sync->welcome_text);
-	if (cm->verbose)
-		g_print("got session: %d\n", cm->session);
+
+	if (sync->has_session) {
+		cm->session = sync->session;
+		cm->user = find_user(cm, cm->session);
+		if (cm->verbose)
+			g_print("got session: %d\n", cm->session);
+	}
 }
 
 static void
@@ -165,6 +188,7 @@ static void
 recv_user_state(mumble_user_state_t *state, struct cmumble *cm)
 {
 	struct cmumble_user *user = NULL;
+	g_print("recv_user_state: %p\n", cm->users);
 
 	if (!state->has_session) {
 		if (cm->verbose)
@@ -348,7 +372,6 @@ int main(int argc, char **argv)
 
 	context = g_option_context_new("command line mumble client");
 	g_option_context_add_main_entries(context, entries, "cmumble");
-	g_option_context_add_group(context, gst_init_get_option_group());
 
 	if (!g_option_context_parse(context, &argc, &argv, &error)) {
 		g_printerr("option parsing failed: %s\n", error->message);
@@ -368,7 +391,6 @@ int main(int argc, char **argv)
 	if (cm.async_queue == NULL)
 		return 1;
 
-	gst_init(&argc, &argv);
 	if (cmumble_audio_init(&cm) < 0)
 		return 1;
 

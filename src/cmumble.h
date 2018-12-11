@@ -1,6 +1,8 @@
 #ifndef _CMUMBLE_H_
 #define _CMUMBLE_H_
 
+#include "../config.h"
+
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
@@ -37,6 +39,11 @@ struct cmumble {
 	struct cmumble_user *user;
 
 	gboolean verbose;
+
+	pa_mainloop_api *pulse_mainloop_api;
+	pa_glib_mainloop *pulse_glib_mainloop;
+	pa_context *pulse_context;
+	pa_stream *pulse_stream_record;
 };
 
 struct cmumble_user {
@@ -45,8 +52,9 @@ struct cmumble_user {
 	uint32_t id;
 	struct cmumble_channel *channel;
 
-	GstElement *pipeline;
-	GstAppSrc *src;
+	pa_stream *stream;
+	//GstElement *pipeline;
+	//GstAppSrc *src;
 };
 
 struct cmumble_channel {
