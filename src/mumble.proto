@@ -1,6 +1,8 @@
 /* NOTE: Do not replace this file directly with future upstream Mumble.proto.
 	 We derive the message id from the position in this file. */
 
+syntax = "proto2";
+
 package MumbleProto;
 
 option optimize_for = SPEED;
