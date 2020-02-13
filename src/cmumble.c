@@ -298,15 +298,16 @@ static gboolean
 do_ping(struct cmumble *cm)
 {
 	mumble_ping_t ping;
-	GTimeVal tv;
+	GDateTime* now = g_date_time_new_now_local();
 
 	cmumble_init_ping(&ping);
-	g_get_current_time(&tv);
-	ping.timestamp = tv.tv_sec;
+	ping.timestamp = g_date_time_to_unix(now);
 	ping.has_timestamp = 1;
 	ping.resync = 1;
 	ping.has_resync = 1;
 	cmumble_send_ping(cm, &ping);
+
+	g_date_time_unref(now);
 
 	return TRUE;
 }
