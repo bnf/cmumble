@@ -28,7 +28,7 @@ connection_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 	con->conn = g_socket_client_connect_to_host_finish (con->sock_client,
 							    res, &error);
 	if (error) {
-		g_printerr("connect failed: %s\n", error->message);
+		g_printerr("connect failed[%d]: %s\n", error->code, error->message);
 		g_main_loop_quit(cm->loop);
 		g_error_free(error);
 		return;
@@ -60,8 +60,12 @@ cmumble_connection_init(struct cmumble *cm,
 
 	con->sock_client = g_socket_client_new();
 	g_socket_client_set_tls(con->sock_client, TRUE);
+	/*
 	g_socket_client_set_tls_validation_flags(con->sock_client,
 						 G_TLS_CERTIFICATE_INSECURE);
+	*/
+	g_socket_client_set_tls_validation_flags(con->sock_client,
+						 G_TLS_CERTIFICATE_VALIDATE_ALL);
 	g_socket_client_set_family(con->sock_client, G_SOCKET_FAMILY_IPV4);
 	g_socket_client_set_protocol(con->sock_client, G_SOCKET_PROTOCOL_TCP);
 	g_socket_client_set_socket_type(con->sock_client, G_SOCKET_TYPE_STREAM);
