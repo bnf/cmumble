@@ -60,12 +60,6 @@ cmumble_connection_init(struct cmumble *cm,
 
 	con->sock_client = g_socket_client_new();
 	g_socket_client_set_tls(con->sock_client, TRUE);
-	/*
-	g_socket_client_set_tls_validation_flags(con->sock_client,
-						 G_TLS_CERTIFICATE_INSECURE);
-	*/
-	g_socket_client_set_tls_validation_flags(con->sock_client,
-						 G_TLS_CERTIFICATE_VALIDATE_ALL);
 	g_socket_client_set_family(con->sock_client, G_SOCKET_FAMILY_IPV4);
 	g_socket_client_set_protocol(con->sock_client, G_SOCKET_PROTOCOL_TCP);
 	g_socket_client_set_socket_type(con->sock_client, G_SOCKET_TYPE_STREAM);
