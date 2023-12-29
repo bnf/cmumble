@@ -158,6 +158,7 @@ static void stream_read_callback(pa_stream *s, size_t length, void *userdata)
 	assert(length > 0);
 
 	/* TODO replace this endlessly growing buffer with a ring buffer? */
+	/* FIXME: as this triggers Assertion 'size < (1024*1024*96)' failed at ../src/pulse/xmalloc.c:83, function pa_xrealloc(). Aborting. */
 	if (a->record_buffer) {
 		a->record_buffer = pa_xrealloc(a->record_buffer,
 					       a->record_buffer_length + length);
